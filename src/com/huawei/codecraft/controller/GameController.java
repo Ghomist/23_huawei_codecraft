@@ -35,13 +35,13 @@ public class GameController {
                 char c = line.charAt(y);
                 switch (c) {
                     case 'A':
-                        robots.add(new Robot(Vector2.GetPosFromGridIndex(x, y)));
+                        robots.add(new Robot(Vector2.getPosFromGridIndex(x, y)));
                         // fallthrough
                     case '.':
                         map.SetGridType(x, y, 0);
                         break;
                     default:
-                        tables.add(new CraftTable(Vector2.GetPosFromGridIndex(x, y)));
+                        tables.add(new CraftTable(Vector2.getPosFromGridIndex(x, y)));
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
