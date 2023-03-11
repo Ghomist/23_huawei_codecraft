@@ -3,16 +3,16 @@ package com.huawei.codecraft.entity;
 import java.util.List;
 
 import com.huawei.codecraft.util.BitCalculator;
-import com.huawei.codecraft.util.Position;
+import com.huawei.codecraft.util.Vector2;
 
 public class CraftTable {
     private int type;
-    private Position pos;
+    private Vector2 pos;
     private int remainFrames;
     private boolean hasProduction;
     private int materialStatus;
 
-    public CraftTable(Position pos) {
+    public CraftTable(Vector2 pos) {
         this.pos = pos;
     }
 
@@ -33,7 +33,7 @@ public class CraftTable {
         return type;
     }
 
-    public Position getPos() {
+    public Vector2 getPos() {
         return pos;
     }
 

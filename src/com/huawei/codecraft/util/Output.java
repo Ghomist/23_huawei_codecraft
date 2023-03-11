@@ -18,4 +18,8 @@ public class Output {
     public static void send(Object obj) {
         out.println(obj);
     }
+
+    public static void debug(Object obj) {
+        System.err.println(obj);
+    }
 }

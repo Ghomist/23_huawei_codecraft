@@ -4,7 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.huawei.codecraft.util.ItemPriceHelper;
-import com.huawei.codecraft.util.Position;
+import com.huawei.codecraft.util.Output;
+import com.huawei.codecraft.util.Vector2;
 
 public class Robot {
     public int id;
@@ -14,14 +15,15 @@ public class Robot {
     private float timeValueArg;
     private float impactValueArg;
     private float w;
-    private float v;
+    private Vector2 v;
     private float dir;
-    private Position pos;
+    private Vector2 pos;
 
     private List<String> cmdList = new LinkedList<>();
 
-    public Robot(Position pos) {
+    public Robot(Vector2 pos) {
         this.pos = pos;
+        this.v = new Vector2(0, 0);
     }
 
     public void update(int id, String info) {
@@ -30,15 +32,17 @@ public class Robot {
         String[] parts = info.split(" ");
 
         tableID = Integer.parseInt(parts[0]);
-        item = parts[1].charAt(1) - '0';
+        item = parts[1].charAt(0) - '0';
         timeValueArg = Float.parseFloat(parts[2]);
         impactValueArg = Float.parseFloat(parts[3]);
         w = Float.parseFloat(parts[4]);
-        v = Float.parseFloat(parts[5]);
-        dir = Float.parseFloat(parts[6]);
+        float vx = Float.parseFloat(parts[5]);
+        float vy = Float.parseFloat(parts[6]);
+        v.set(vx, vy);
+        dir = Float.parseFloat(parts[7]);
 
-        float x = Float.parseFloat(parts[7]);
-        float y = Float.parseFloat(parts[8]);
+        float x = Float.parseFloat(parts[8]);
+        float y = Float.parseFloat(parts[9]);
         pos.set(x, y);
 
         cmdList.clear();
@@ -88,7 +92,7 @@ public class Robot {
         return w;
     }
 
-    public float getLineSpeed() {
+    public Vector2 getLineSpeed() {
         return v;
     }
 

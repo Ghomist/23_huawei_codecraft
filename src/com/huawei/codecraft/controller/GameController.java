@@ -8,7 +8,7 @@ import com.huawei.codecraft.entity.GameMap;
 import com.huawei.codecraft.entity.Robot;
 import com.huawei.codecraft.util.Input;
 import com.huawei.codecraft.util.Output;
-import com.huawei.codecraft.util.Position;
+import com.huawei.codecraft.util.Vector2;
 
 public class GameController {
 
@@ -35,13 +35,13 @@ public class GameController {
                 char c = line.charAt(y);
                 switch (c) {
                     case 'A':
-                        robots.add(new Robot(Position.GetPosFromGridIndex(x, y)));
+                        robots.add(new Robot(Vector2.GetPosFromGridIndex(x, y)));
                         // fallthrough
                     case '.':
                         map.SetGridType(x, y, 0);
                         break;
                     default:
-                        tables.add(new CraftTable(Position.GetPosFromGridIndex(x, y)));
+                        tables.add(new CraftTable(Vector2.GetPosFromGridIndex(x, y)));
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
@@ -49,7 +49,9 @@ public class GameController {
             }
             x++;
         }
+        start();
         running = true;
+        Output.ok();
     }
 
     public void run() {
@@ -60,7 +62,16 @@ public class GameController {
         }
     }
 
+    private void start() {
+        // Todo: init schedule
+    }
+
     private void update() {
+        if (!Input.hasNextLine()) {
+            running = false;
+            return;
+        }
+
         String line;
 
         // frameID & money
@@ -85,11 +96,13 @@ public class GameController {
             robots.get(i).update(i, line);
         }
 
-        Input.readUtilOK();
+        Input.readUntilOK();
     }
 
     private void schedule() {
         // Todo something
+        robots.get(0).setRotateSpeed((float) Math.PI);
+        Output.debug(robots.get(0).getDir());
     }
 
     private void sendCommands() {
