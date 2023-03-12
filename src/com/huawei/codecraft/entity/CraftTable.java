@@ -6,14 +6,18 @@ import com.huawei.codecraft.util.BitCalculator;
 import com.huawei.codecraft.util.Vector2;
 
 public class CraftTable {
+
+    public int id;
+
     private int type;
     private Vector2 pos;
     private int remainFrames;
     private boolean hasProduction;
     private int materialStatus;
 
-    public CraftTable(Vector2 pos) {
-        this.pos = pos;
+    public CraftTable(int id) {
+        this.pos = new Vector2(0, 0);
+        this.id = id;
     }
 
     public void update(String info) {

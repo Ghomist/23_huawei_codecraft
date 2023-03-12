@@ -2,6 +2,7 @@ package com.huawei.codecraft.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import com.huawei.codecraft.entity.CraftTable;
 import com.huawei.codecraft.entity.GameMap;
@@ -19,7 +20,7 @@ public class GameController {
     private int craftTableCount;
 
     private GameMap map;
-    private List<Robot> robots = new ArrayList<>();
+    private Robot[] robots = new Robot[4];
     private List<CraftTable> tables = new ArrayList<>();
 
     public void init() {
@@ -35,19 +36,22 @@ public class GameController {
                 char c = line.charAt(y);
                 switch (c) {
                     case 'A':
-                        robots.add(new Robot(Vector2.getPosFromGridIndex(x, y)));
+                        // no need for init Robots
+                        // robots.add(new Robot(Vector2.getPosFromGridIndex(x, y)));
                         // fallthrough
                     case '.':
                         map.SetGridType(x, y, 0);
                         break;
                     default:
-                        tables.add(new CraftTable(Vector2.getPosFromGridIndex(x, y)));
+                        tables.add(new CraftTable(tables.size()));
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
-
             }
             x++;
+        }
+        for (int i = 0; i < 4; ++i) {
+            robots[i] = new Robot();
         }
         start();
         running = true;
@@ -58,6 +62,9 @@ public class GameController {
         while (running) {
             update();
             schedule();
+            for (Robot robot : robots) {
+                robot.schedule();
+            }
             sendCommands();
         }
     }
@@ -93,16 +100,20 @@ public class GameController {
         // robot update
         for (int i = 0; i < 4; ++i) {
             line = Input.nextLine();
-            robots.get(i).update(i, line);
+            robots[i].update(i, line);
         }
 
         Input.readUntilOK();
     }
 
     private void schedule() {
-        // Todo something
-        robots.get(0).setRotateSpeed((float) Math.PI);
-        Output.debug(robots.get(0).getDir());
+        for (Robot robot : robots) {
+            if (!robot.hasTarget()) {
+                int target = new Random().nextInt(craftTableCount);
+                robot.setTargetTable(tables.get(target));
+                Output.debug(robot.id + " -> " + target);
+            }
+        }
     }
 
     private void sendCommands() {

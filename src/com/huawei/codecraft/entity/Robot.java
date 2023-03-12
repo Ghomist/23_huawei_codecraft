@@ -8,21 +8,37 @@ import com.huawei.codecraft.util.Output;
 import com.huawei.codecraft.util.Vector2;
 
 public class Robot {
+
+    public static final double MAX_FORWARD_SPEED = 6.0;
+    public static final double MAX_BACKWARD_SPEED = -2.0;
+    public static final double MAX_CW_ROTATE_SPEED = -Math.PI;
+    public static final double MAX_CCW_ROTATE_SPEED = Math.PI;
+    public static final double DENSITY = 20;
+    public static final double RADIUS = 0.45;
+    public static final double RADIUS_CARRY = 0.53;
+    public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
+    public static final double AT_TABLE_DIST = 0.4;
+
+    public static final double STOP_DIST = 0.7;
+
     public int id;
 
-    private int tableID;
+    private int tableType;
     private int item;
     private float timeValueArg;
     private float impactValueArg;
     private float w;
-    private Vector2 v;
     private float dir;
+    private Vector2 v;
     private Vector2 pos;
+
+    private Vector2 targetPos = null;
+    private int targetTableID = -1;
 
     private List<String> cmdList = new LinkedList<>();
 
-    public Robot(Vector2 pos) {
-        this.pos = pos;
+    public Robot() {
+        this.pos = new Vector2(0, 0);
         this.v = new Vector2(0, 0);
     }
 
@@ -31,7 +47,7 @@ public class Robot {
 
         String[] parts = info.split(" ");
 
-        tableID = Integer.parseInt(parts[0]);
+        tableType = Integer.parseInt(parts[0]);
         item = parts[1].charAt(0) - '0';
         timeValueArg = Float.parseFloat(parts[2]);
         impactValueArg = Float.parseFloat(parts[3]);
@@ -48,11 +64,44 @@ public class Robot {
         cmdList.clear();
     }
 
-    public void setForwardSpeed(float speed) {
+    public void schedule() {
+        if (targetPos != null) {
+            double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+            double diff = targetDir - dir;
+
+            if (diff >= Math.PI) {
+                diff = 2 * Math.PI - diff;
+            } else if (diff <= -Math.PI) {
+                diff += 2 * Math.PI;
+            }
+
+            double speedK = Math.cos(Math.abs(diff));
+            double speed = speedK > 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED + 3;
+
+            setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
+
+            if (Vector2.distance(targetPos, pos) < STOP_DIST) {
+                setForwardSpeed(MAX_BACKWARD_SPEED);
+                if (getTable() == targetTableID)
+                    targetPos = null;
+            } else {
+                setForwardSpeed(speed * speedK);
+            }
+        } else {
+            setForwardSpeed(0);
+        }
+    }
+
+    public void setTargetTable(CraftTable table) {
+        targetPos = table.getPos();
+        targetTableID = table.id;
+    }
+
+    public void setForwardSpeed(double speed) {
         cmdList.add("forward " + id + ' ' + speed);
     }
 
-    public void setRotateSpeed(float speed) {
+    public void setRotateSpeed(double speed) {
         cmdList.add("rotate " + id + ' ' + speed);
     }
 
@@ -69,11 +118,11 @@ public class Robot {
     }
 
     public boolean isAtTable() {
-        return tableID != -1;
+        return tableType != -1;
     }
 
     public int getTable() {
-        return tableID;
+        return tableType;
     }
 
     public boolean hasItem() {
@@ -98,6 +147,10 @@ public class Robot {
 
     public float getDir() {
         return dir;
+    }
+
+    public boolean hasTarget() {
+        return targetPos != null;
     }
 
     public List<String> getCommands() {

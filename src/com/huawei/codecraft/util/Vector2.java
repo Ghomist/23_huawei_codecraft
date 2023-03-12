@@ -23,4 +23,9 @@ public class Vector2 {
         float y = a.y - b.y;
         return Math.sqrt(x * x + y * y);
     }
+
+    @Override
+    public String toString() {
+        return "(" + x + ", " + y + ")";
+    }
 }
