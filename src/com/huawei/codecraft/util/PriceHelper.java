@@ -1,5 +1,7 @@
 package com.huawei.codecraft.util;
 
+import com.huawei.codecraft.entity.CraftTable;
+
 public class PriceHelper {
     public static int getBuyPrice(int item) {
         switch (item) {
@@ -43,6 +45,20 @@ public class PriceHelper {
         }
     }
 
+    public static int getLaterProfitByCraft(CraftTable table) {
+        int type = table.getType();
+        if (type <= 3 || type >= 8)
+            return 0;
+        int profit = getSellPrice(type) - getBuyPrice(type);
+        return profit / (type == 7 ? 60 : 20);
+        // return 0;
+    }
+
+    public static double getTimeValueArg(double holdTime) {
+        double holdFrames = holdTime * 50;
+        return f(holdFrames, 9000, 0.8);
+    }
+
     private static double f(double x, double maxX, double minRate) {
         if (x < maxX) {
             double k = 1 - x / maxX;
@@ -51,10 +67,5 @@ public class PriceHelper {
         } else {
             return minRate;
         }
-    }
-
-    public static double getTimeValueArg(double holdTime) {
-        double holdFrames = holdTime * 50;
-        return f(holdFrames, 9000, 0.8);
     }
 }

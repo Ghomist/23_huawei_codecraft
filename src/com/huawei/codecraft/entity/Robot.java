@@ -19,6 +19,8 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double AT_TABLE_DIST = 0.4;
 
+    public static final double AVOID_DIST = 1.4; // min is 5.3 * 2 = 1.06
+    // public static final double AVOID_SPEED_OFFSET = 0.5;
     public static final double STOP_DIST = AT_TABLE_DIST;
 
     public int id;
@@ -36,6 +38,9 @@ public class Robot {
     private Scheme scheme = null;
     private Vector2 targetPos = null;
     private int targetTableID = -1;
+
+    private boolean avoidImpact = false;
+    private Robot impactRobot = null;
 
     private List<String> cmdList = new LinkedList<>();
 
@@ -63,6 +68,8 @@ public class Robot {
         float y = Float.parseFloat(parts[9]);
         pos.set(x, y);
 
+        avoidImpact = false;
+        impactRobot = null;
         cmdList.clear();
     }
 
@@ -82,21 +89,27 @@ public class Robot {
             }
         }
         if (targetPos != null) {
-            double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
-            double diff = targetDir - dir;
+            double targetDir;
+            if (!avoidImpact) {
+                targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+            } else {
+                Vector2 avoidPos = impactRobot.getPos();
+                targetDir = Math.atan2(pos.y - avoidPos.y, pos.x - avoidPos.x);
+            }
 
+            double diff = targetDir - dir;
             if (diff >= Math.PI) {
                 diff = 2 * Math.PI - diff;
             } else if (diff <= -Math.PI) {
                 diff += 2 * Math.PI;
             }
 
+            double speedK = Math.cos(Math.abs(diff));
+            double speed = speedK > 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED - 2;
             setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
 
-            double speedK = Math.cos(Math.abs(diff));
-            double speed = speedK > 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED + 3;
-
-            if (Vector2.distance(targetPos, pos) < STOP_DIST) {
+            double dist = Vector2.distance(targetPos, pos);
+            if (dist < STOP_DIST) {
                 setForwardSpeed(MAX_BACKWARD_SPEED);
                 if (getTableID() == targetTableID) {
                     if (targetTableID == scheme.start.id) {
@@ -114,6 +127,11 @@ public class Robot {
         } else {
             setForwardSpeed(0);
         }
+    }
+
+    public void avoidImpact(Robot impactRobot) {
+        avoidImpact = true;
+        this.impactRobot = impactRobot;
     }
 
     public void setTargetScheme(Scheme scheme) {
@@ -135,7 +153,8 @@ public class Robot {
     }
 
     public void buy() {
-        cmdList.add("buy " + id);
+        if (!hasItem())
+            cmdList.add("buy " + id);
     }
 
     public void sell() {
@@ -192,5 +211,9 @@ public class Robot {
 
     public List<String> getCommands() {
         return cmdList;
+    }
+
+    public double getRadius() {
+        return hasItem() ? 0.53 : 0.4;
     }
 }

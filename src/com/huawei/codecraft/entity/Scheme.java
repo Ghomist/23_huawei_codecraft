@@ -6,7 +6,7 @@ import com.huawei.codecraft.util.Vector2;
 
 public class Scheme {
 
-    public static final double AVERAGE_MAX_SPEED = 5;
+    public static final double AVERAGE_MAX_SPEED = 4.9;
 
     public CraftTable start;
     public CraftTable end;
@@ -24,7 +24,7 @@ public class Scheme {
         double distance = Vector2.distance(start.getPos(), end.getPos());
         expectTrafficTime = distance / AVERAGE_MAX_SPEED;
         double timeValueArg = PriceHelper.getTimeValueArg(expectTrafficTime);
-        expectProfit = (sellPrice * timeValueArg) - buyPrice;
+        expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);
     }
 
     public static boolean isAvailableScheme(CraftTable start, CraftTable end) {

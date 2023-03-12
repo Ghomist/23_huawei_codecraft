@@ -139,6 +139,16 @@ public class GameController {
                     robot.setTargetScheme(pendingScheme);
                 }
             }
+
+            for (Robot r : robots) {
+                if (r == robot)
+                    continue;
+                // in dangerous distance
+                if (Vector2.distance(robot.getPos(), r.getPos()) <= Robot.AVOID_DIST) {
+                    robot.avoidImpact(r);
+                    break;
+                }
+            }
         }
     }
 
