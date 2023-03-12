@@ -140,15 +140,19 @@ public class GameController {
                 }
             }
 
+            boolean hasImpact = false;
             for (Robot r : robots) {
-                if (r == robot)
+                if (r.id == robot.id)
                     continue;
                 // in dangerous distance
                 if (Vector2.distance(robot.getPos(), r.getPos()) <= Robot.AVOID_DIST) {
+                    hasImpact = true;
                     robot.avoidImpact(r);
                     break;
                 }
             }
+            if (!hasImpact)
+                robot.avoidImpact(null);
         }
     }
 
