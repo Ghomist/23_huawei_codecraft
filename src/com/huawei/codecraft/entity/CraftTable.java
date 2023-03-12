@@ -15,9 +15,13 @@ public class CraftTable {
     private boolean hasProduction;
     private int materialStatus;
 
-    public CraftTable(int id) {
-        this.pos = new Vector2(0, 0);
+    private boolean[] pendingMaterial = new boolean[10];
+    private boolean isOrdered = false;
+
+    public CraftTable(int id, int type, Vector2 pos) {
+        this.pos = pos;
         this.id = id;
+        this.type = type;
     }
 
     public void update(String info) {
@@ -57,16 +61,31 @@ public class CraftTable {
         return remainFrames == 0;
     }
 
-    public boolean hasMaterial(int item) {
-        return BitCalculator.isOne(materialStatus, item);
+    public boolean isProducingOrFinish() {
+        return remainFrames >= 0;
     }
 
-    public List<Integer> inNeedMaterials() {
-        // Todo
-        return null;
+    public boolean hasMaterial(int item) {
+        return BitCalculator.isOne(materialStatus, item) || pendingMaterial[item];
     }
 
     public boolean hasProduction() {
         return hasProduction;
+    }
+
+    public boolean isOrdered() {
+        return isOrdered;
+    }
+
+    public void setOrder(boolean order) {
+        isOrdered = order;
+    }
+
+    public void setPendingMaterial(int material) {
+        pendingMaterial[material] = true;
+    }
+
+    public void finishPendingMaterial(int material) {
+        pendingMaterial[material] = false;
     }
 }

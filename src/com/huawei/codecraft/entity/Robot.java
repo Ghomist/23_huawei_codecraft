@@ -3,7 +3,7 @@ package com.huawei.codecraft.entity;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.huawei.codecraft.util.ItemPriceHelper;
+import com.huawei.codecraft.util.PriceHelper;
 import com.huawei.codecraft.util.Output;
 import com.huawei.codecraft.util.Vector2;
 
@@ -19,7 +19,7 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double AT_TABLE_DIST = 0.4;
 
-    public static final double STOP_DIST = 0.7;
+    public static final double STOP_DIST = AT_TABLE_DIST;
 
     public int id;
 
@@ -32,6 +32,8 @@ public class Robot {
     private Vector2 v;
     private Vector2 pos;
 
+    private boolean isWaitingProduce = false;
+    private Scheme scheme = null;
     private Vector2 targetPos = null;
     private int targetTableID = -1;
 
@@ -65,6 +67,20 @@ public class Robot {
     }
 
     public void schedule() {
+        if (scheme != null) {
+            if (!hasItem()) {
+                setTargetTable(scheme.start);
+            } else {
+                setTargetTable(scheme.end);
+            }
+        }
+        if (isWaitingProduce) {
+            if (getTableID() == targetTableID && scheme.start.hasProduction()) {
+                buy();
+                scheme.onSending();
+                isWaitingProduce = false;
+            }
+        }
         if (targetPos != null) {
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             double diff = targetDir - dir;
@@ -75,21 +91,34 @@ public class Robot {
                 diff += 2 * Math.PI;
             }
 
+            setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
+
             double speedK = Math.cos(Math.abs(diff));
             double speed = speedK > 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED + 3;
 
-            setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
-
             if (Vector2.distance(targetPos, pos) < STOP_DIST) {
                 setForwardSpeed(MAX_BACKWARD_SPEED);
-                if (getTable() == targetTableID)
+                if (getTableID() == targetTableID) {
+                    if (targetTableID == scheme.start.id) {
+                        isWaitingProduce = true;
+                    } else {
+                        sell();
+                        scheme.finish();
+                        scheme = null;
+                    }
                     targetPos = null;
+                }
             } else {
                 setForwardSpeed(speed * speedK);
             }
         } else {
             setForwardSpeed(0);
         }
+    }
+
+    public void setTargetScheme(Scheme scheme) {
+        this.scheme = scheme;
+        scheme.setPending();
     }
 
     public void setTargetTable(CraftTable table) {
@@ -121,7 +150,7 @@ public class Robot {
         return tableType != -1;
     }
 
-    public int getTable() {
+    public int getTableID() {
         return tableType;
     }
 
@@ -134,7 +163,7 @@ public class Robot {
     }
 
     public float getItemPrice() {
-        return ItemPriceHelper.getSalePrice(item) * timeValueArg * impactValueArg;
+        return PriceHelper.getSellPrice(item) * timeValueArg * impactValueArg;
     }
 
     public float getAngleSpeed() {
@@ -145,12 +174,20 @@ public class Robot {
         return v;
     }
 
+    public Vector2 getPos() {
+        return pos;
+    }
+
     public float getDir() {
         return dir;
     }
 
     public boolean hasTarget() {
         return targetPos != null;
+    }
+
+    public boolean isFree() {
+        return scheme == null;
     }
 
     public List<String> getCommands() {

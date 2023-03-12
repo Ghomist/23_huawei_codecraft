@@ -1,6 +1,6 @@
 package com.huawei.codecraft.util;
 
-public class ItemPriceHelper {
+public class PriceHelper {
     public static int getBuyPrice(int item) {
         switch (item) {
             case 1:
@@ -22,7 +22,7 @@ public class ItemPriceHelper {
         }
     }
 
-    public static int getSalePrice(int item) {
+    public static int getSellPrice(int item) {
         switch (item) {
             case 1:
                 return 6000;
@@ -41,5 +41,20 @@ public class ItemPriceHelper {
             default:
                 return 0;
         }
+    }
+
+    private static double f(double x, double maxX, double minRate) {
+        if (x < maxX) {
+            double k = 1 - x / maxX;
+            k *= k;
+            return (1 - Math.sqrt(1 - k)) * (1 - minRate) + minRate;
+        } else {
+            return minRate;
+        }
+    }
+
+    public static double getTimeValueArg(double holdTime) {
+        double holdFrames = holdTime * 50;
+        return f(holdFrames, 9000, 0.8);
     }
 }

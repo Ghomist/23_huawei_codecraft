@@ -15,7 +15,7 @@ public class Vector2 {
     }
 
     public static Vector2 getPosFromGridIndex(int x, int y) {
-        return new Vector2(x * 0.5f + 0.25f, y * 0.5f + 0.25f);
+        return new Vector2(y * 0.5f + 0.25f, 49.75f - x * 0.5f);
     }
 
     public static double distance(Vector2 a, Vector2 b) {

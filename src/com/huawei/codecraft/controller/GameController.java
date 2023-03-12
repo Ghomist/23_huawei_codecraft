@@ -7,6 +7,7 @@ import java.util.Random;
 import com.huawei.codecraft.entity.CraftTable;
 import com.huawei.codecraft.entity.GameMap;
 import com.huawei.codecraft.entity.Robot;
+import com.huawei.codecraft.entity.Scheme;
 import com.huawei.codecraft.util.Input;
 import com.huawei.codecraft.util.Output;
 import com.huawei.codecraft.util.Vector2;
@@ -22,6 +23,7 @@ public class GameController {
     private GameMap map;
     private Robot[] robots = new Robot[4];
     private List<CraftTable> tables = new ArrayList<>();
+    private List<Scheme> schemes = new ArrayList<>();
 
     public void init() {
         map = new GameMap();
@@ -43,7 +45,7 @@ public class GameController {
                         map.SetGridType(x, y, 0);
                         break;
                     default:
-                        tables.add(new CraftTable(tables.size()));
+                        tables.add(new CraftTable(tables.size(), c - '0', Vector2.getPosFromGridIndex(x, y)));
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
@@ -71,6 +73,17 @@ public class GameController {
 
     private void start() {
         // Todo: init schedule
+        for (int i = 0; i < tables.size(); ++i) {
+            CraftTable start = tables.get(i);
+            for (int j = 0; j < tables.size(); ++j) {
+                if (i == j)
+                    continue;
+                CraftTable end = tables.get(j);
+                if (Scheme.isAvailableScheme(start, end)) {
+                    schemes.add(new Scheme(start, end));
+                }
+            }
+        }
     }
 
     private void update() {
@@ -108,10 +121,23 @@ public class GameController {
 
     private void schedule() {
         for (Robot robot : robots) {
-            if (!robot.hasTarget()) {
-                int target = new Random().nextInt(craftTableCount);
-                robot.setTargetTable(tables.get(target));
-                Output.debug(robot.id + " -> " + target);
+            if (robot.isFree()) {
+                // int target = new Random().nextInt(craftTableCount);
+                schemes.sort((sa, sb) -> {
+                    if (sa.isAvailable() && !sb.isAvailable()) {
+                        return -1;
+                    } else if (!sa.isAvailable() && sb.isAvailable()) {
+                        return 1;
+                    } else if (sa.isAvailable() && sb.isAvailable()) {
+                        return Double.compare(sb.getAverageProfit(robot), sa.getAverageProfit(robot));
+                    } else {
+                        return 0;
+                    }
+                });
+                Scheme pendingScheme = schemes.get(0);
+                if (pendingScheme.isAvailable()) {
+                    robot.setTargetScheme(pendingScheme);
+                }
             }
         }
     }
