@@ -81,10 +81,12 @@ public class Robot {
             }
         }
         if (isWaitingProduce) {
-            if (getTableID() == targetTableID && scheme.start.hasProduction()) {
-                buy();
-                scheme.onSending();
-                isWaitingProduce = false;
+            if (getTableID() == targetTableID) {
+                if (scheme != null && scheme.start.hasProduction()) {
+                    buy();
+                    scheme.onSending();
+                    isWaitingProduce = false;
+                }
             }
         }
         if (targetPos != null) {

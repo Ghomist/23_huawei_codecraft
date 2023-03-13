@@ -1,5 +1,6 @@
 package com.huawei.codecraft.entity;
 
+import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.util.Output;
 import com.huawei.codecraft.util.PriceHelper;
 import com.huawei.codecraft.util.Vector2;
@@ -11,12 +12,15 @@ public class Scheme {
     public CraftTable start;
     public CraftTable end;
 
+    private GameController controller;
+
     private boolean isPending = false;
 
     private double expectTrafficTime;
     private double expectProfit;
 
-    public Scheme(CraftTable start, CraftTable end) {
+    public Scheme(GameController controller, CraftTable start, CraftTable end) {
+        this.controller = controller;
         this.start = start;
         this.end = end;
         int sellPrice = PriceHelper.getSellPrice(start.getType());
@@ -86,6 +90,7 @@ public class Scheme {
     }
 
     public boolean isAvailable() {
-        return !isPending && start.isProducingOrFinish() && !end.hasMaterial(start.getType()) && !start.isOrdered();
+        return controller.getRemainTime() >= expectTrafficTime && !isPending && start.isProducingOrFinish()
+                && !end.hasMaterial(start.getType()) && !start.isOrdered();
     }
 }

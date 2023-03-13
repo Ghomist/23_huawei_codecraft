@@ -14,11 +14,13 @@ import com.huawei.codecraft.util.Vector2;
 
 public class GameController {
 
-    private boolean running;
+    public static final int TOTAL_FRAMES_COUNT = 3 * 60 * 50;
 
-    private int frameID;
-    private int money;
-    private int craftTableCount;
+    public boolean running;
+
+    public int frameID;
+    public int money;
+    public int craftTableCount;
 
     private GameMap map;
     private Robot[] robots = new Robot[4];
@@ -71,6 +73,10 @@ public class GameController {
         }
     }
 
+    public int getRemainTime() {
+        return (TOTAL_FRAMES_COUNT - frameID + 1) * 20 / 1000;
+    }
+
     private void start() {
         // Todo: init schedule
         for (int i = 0; i < tables.size(); ++i) {
@@ -80,7 +86,7 @@ public class GameController {
                     continue;
                 CraftTable end = tables.get(j);
                 if (Scheme.isAvailableScheme(start, end)) {
-                    schemes.add(new Scheme(start, end));
+                    schemes.add(new Scheme(this, start, end));
                 }
             }
         }
