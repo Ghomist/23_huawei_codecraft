@@ -19,7 +19,8 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double AT_TABLE_DIST = 0.4;
 
-    public static final double AVOID_DIST = 1.08; // min is 5.3 * 2 = 1.06
+    public static final double AVOID_DIST = 1.09; // min is 5.3 * 2 = 1.06
+    public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
     public static final double STOP_DIST = AT_TABLE_DIST + 0.00098;
 
@@ -103,12 +104,16 @@ public class Robot {
             }
 
             double speedK = Math.cos(Math.abs(diff));
-            double speed = speedK > 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED - 2.00001;
+            double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED - 2.00001;
+            if (avoidImpact)
+                speed *= SLOW_DOWN_RATE;
             setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
 
             double dist = Vector2.distance(targetPos, pos);
-            if (dist < STOP_DIST) {
-                setForwardSpeed(MAX_BACKWARD_SPEED);
+            boolean stop = dist < STOP_DIST;
+
+            if (stop) {
+                setForwardSpeed(-speedK * speed);
                 if (getTableID() == targetTableID) {
                     if (targetTableID == scheme.start.id) {
                         isWaitingProduce = true;

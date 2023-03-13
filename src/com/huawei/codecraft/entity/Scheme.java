@@ -65,7 +65,7 @@ public class Scheme {
     public double getAverageProfit(Robot robot) {
         double timeNoWait = Vector2.distance(robot.getPos(), start.getPos()) / AVERAGE_MAX_SPEED;
         double timeWait = start.getRemainFrames() / 50;
-        double expectWaitTime = Math.max(timeNoWait, timeWait);
+        double expectWaitTime = Math.max(timeNoWait, timeWait * 13);
         double expectTime = expectWaitTime + expectTrafficTime;
         return expectProfit / expectTime;
     }
