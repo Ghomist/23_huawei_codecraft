@@ -130,18 +130,18 @@ public class GameController {
             if (robot.isFree()) {
                 // int target = new Random().nextInt(craftTableCount);
                 schemes.sort((sa, sb) -> {
-                    if (sa.isAvailable() && !sb.isAvailable()) {
+                    if (sa.isAvailable(robot) && !sb.isAvailable(robot)) {
                         return -1;
-                    } else if (!sa.isAvailable() && sb.isAvailable()) {
+                    } else if (!sa.isAvailable(robot) && sb.isAvailable(robot)) {
                         return 1;
-                    } else if (sa.isAvailable() && sb.isAvailable()) {
+                    } else if (sa.isAvailable(robot) && sb.isAvailable(robot)) {
                         return Double.compare(sb.getAverageProfit(robot), sa.getAverageProfit(robot));
                     } else {
                         return 0;
                     }
                 });
                 Scheme pendingScheme = schemes.get(0);
-                if (pendingScheme.isAvailable()) {
+                if (pendingScheme.isAvailable(robot)) {
                     robot.setTargetScheme(pendingScheme);
                 }
             }

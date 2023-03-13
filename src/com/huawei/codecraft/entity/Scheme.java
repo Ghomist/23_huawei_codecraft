@@ -89,8 +89,11 @@ public class Scheme {
         end.finishPendingMaterial(start.getType());
     }
 
-    public boolean isAvailable() {
-        return controller.getRemainTime() >= expectTrafficTime && !isPending && start.isProducingOrFinish()
+    public boolean isAvailable(Robot robot) {
+        return controller.getRemainTime() >= expectTrafficTime
+                + Vector2.distance(robot.getPos(), start.getPos()) / AVERAGE_MAX_SPEED
+                && !isPending
+                && start.isProducingOrFinish()
                 && !end.hasMaterial(start.getType()) && !start.isOrdered();
     }
 }

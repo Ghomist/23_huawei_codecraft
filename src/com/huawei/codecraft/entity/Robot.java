@@ -106,7 +106,7 @@ public class Robot {
             }
 
             double speedK = Math.cos(Math.abs(diff));
-            double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED - 2.00001;
+            double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED - 2.10011;
             if (avoidImpact)
                 speed *= SLOW_DOWN_RATE;
             setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
