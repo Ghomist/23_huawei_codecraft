@@ -14,14 +14,18 @@ public class Vector2 {
         this.y = y;
     }
 
-    public static Vector2 getPosFromGridIndex(int x, int y) {
-        return new Vector2(y * 0.5f + 0.25f, 49.75f - x * 0.5f);
+    public void add(double x, double y) {
+        this.x += x;
+        this.y += y;
     }
 
-    public static double distance(Vector2 a, Vector2 b) {
-        double x = a.x - b.x;
-        double y = a.y - b.y;
-        return Math.sqrt(x * x + y * y);
+    public void multiply(double n) {
+        x *= n;
+        y *= n;
+    }
+
+    public static Vector2 getPosFromGridIndex(int x, int y) {
+        return new Vector2(y * 0.5f + 0.25f, 49.75f - x * 0.5f);
     }
 
     public static Vector2 getFromRadius(double radius) {
@@ -35,8 +39,22 @@ public class Vector2 {
         return v;
     }
 
+    public static double distance(Vector2 a, Vector2 b) {
+        double x = a.x - b.x;
+        double y = a.y - b.y;
+        return Math.sqrt(x * x + y * y);
+    }
+
     public static Vector2 add(Vector2 a, Vector2 b) {
         return new Vector2(a.x + b.x, a.y + b.y);
+    }
+
+    public static Vector2 dot(Vector2 a, Vector2 b) {
+        return new Vector2(a.x * b.x, a.y * b.y);
+    }
+
+    public static Vector2 dot(Vector2 v, double n) {
+        return new Vector2(v.x * n, v.y * n);
     }
 
     @Override
