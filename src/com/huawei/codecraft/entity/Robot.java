@@ -23,7 +23,7 @@ public class Robot {
     public static final double AVOID_DIST = 1.5; // min is 5.3 * 2 = 1.06
     public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
-    public static final double STOP_DIST = (AT_TABLE_DIST + 0.00098) * 0.15;
+    public static final double STOP_DIST = (AT_TABLE_DIST) * 0.15;
 
     public int id;
 
@@ -44,7 +44,7 @@ public class Robot {
     private boolean avoidImpact = false;
     private Robot impactRobot = null;
 
-    private Random random = new Random();
+    // private Random random = new Random();
 
     private List<String> cmdList = new LinkedList<>();
 
@@ -114,8 +114,9 @@ public class Robot {
                 // if (random.nextBoolean()) {
                 // targetDir = -targetDir;
                 // }
-                if (Math.abs(diff) < Math.PI / 3) {
+                if (Vector2.cos(Vector2.getFromRadius(impactRobot.getDir()), Vector2.getFromRadius(dir)) > 0) {
                     targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+                    avoidImpact = false;
                 } else {
                     targetDir += dir;
                     if (dir >= Math.PI) {
