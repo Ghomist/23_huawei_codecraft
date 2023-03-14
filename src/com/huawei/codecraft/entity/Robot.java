@@ -19,7 +19,7 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double AT_TABLE_DIST = 0.4;
 
-    public static final double AVOID_DIST = 1.09; // min is 5.3 * 2 = 1.06
+    public static final double AVOID_DIST = 2; // min is 5.3 * 2 = 1.06
     public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
     public static final double STOP_DIST = AT_TABLE_DIST + 0.00098;
@@ -91,16 +91,16 @@ public class Robot {
         }
         if (targetPos != null) {
             double targetDir;
-            if (!avoidImpact) {
-                targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
-            } else {
+            if (avoidImpact) {
                 Vector2 avoidPos = impactRobot.getPos();
                 targetDir = Math.atan2(pos.y - avoidPos.y, pos.x - avoidPos.x);
+            } else {
+                targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             }
 
             double diff = targetDir - dir;
             if (diff >= Math.PI) {
-                diff = 2 * Math.PI - diff;
+                diff -= 2 * Math.PI;
             } else if (diff <= -Math.PI) {
                 diff += 2 * Math.PI;
             }
@@ -115,7 +115,7 @@ public class Robot {
             boolean stop = dist < STOP_DIST;
 
             if (stop) {
-                setForwardSpeed(-speedK * speed);
+                setForwardSpeed(-speed * speedK);
                 if (getTableID() == targetTableID) {
                     if (targetTableID == scheme.start.id) {
                         isWaitingProduce = true;
