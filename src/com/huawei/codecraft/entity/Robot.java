@@ -2,6 +2,7 @@ package com.huawei.codecraft.entity;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import com.huawei.codecraft.util.PriceHelper;
 import com.huawei.codecraft.util.Output;
@@ -42,6 +43,8 @@ public class Robot {
 
     private boolean avoidImpact = false;
     private Robot impactRobot = null;
+
+    private Random random = new Random();
 
     private List<String> cmdList = new LinkedList<>();
 
@@ -92,8 +95,35 @@ public class Robot {
         if (targetPos != null) {
             double targetDir;
             if (avoidImpact) {
-                Vector2 avoidPos = impactRobot.getPos();
-                targetDir = Math.atan2(pos.y - avoidPos.y, pos.x - avoidPos.x);
+                // Vector2 avoidPos = impactRobot.getPos();
+                // targetDir = Math.atan2(pos.y - avoidPos.y, pos.x - avoidPos.x);
+                // targetDir = Math.random() * Math.PI / 4 + Math.PI / 8;
+                targetDir = Math.PI / 8;
+                Vector2 other = impactRobot.getPos();
+                double avoidDir = Math.atan2(other.y - pos.y, other.x - pos.x);
+                double diff = avoidDir - dir;
+                if (diff >= Math.PI) {
+                    diff -= 2 * Math.PI;
+                } else if (diff <= -Math.PI) {
+                    diff += 2 * Math.PI;
+                }
+                if (diff > 0) {
+                    targetDir = -targetDir;
+                }
+
+                // if (random.nextBoolean()) {
+                // targetDir = -targetDir;
+                // }
+                if (Math.abs(diff) < Math.PI / 3) {
+                    targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+                } else {
+                    targetDir += dir;
+                    if (dir >= Math.PI) {
+                        dir -= 2 * Math.PI;
+                    } else if (dir <= -Math.PI) {
+                        dir += 2 * Math.PI;
+                    }
+                }
             } else {
                 targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             }
