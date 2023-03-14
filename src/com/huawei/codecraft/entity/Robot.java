@@ -19,7 +19,7 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double AT_TABLE_DIST = 0.4;
 
-    public static final double AVOID_DIST = 2; // min is 5.3 * 2 = 1.06
+    public static final double AVOID_DIST = 1.5; // min is 5.3 * 2 = 1.06
     public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
     public static final double STOP_DIST = (AT_TABLE_DIST + 0.00098) * 0.15;
