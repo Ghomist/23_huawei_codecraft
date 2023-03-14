@@ -7,7 +7,9 @@ import com.huawei.codecraft.util.Vector2;
 
 public class Scheme {
 
-    public static final double AVERAGE_MAX_SPEED = 4.9;
+    public static final double AVERAGE_MAX_SPEED = Robot.MAX_FORWARD_SPEED - 0.2;
+    public static final double CHANGING_SPEED = AVERAGE_MAX_SPEED / 2;
+    public static final double CHANGING_SPEED_DIST = 1;
 
     public CraftTable start;
     public CraftTable end;
@@ -26,7 +28,8 @@ public class Scheme {
         int sellPrice = PriceHelper.getSellPrice(start.getType());
         int buyPrice = PriceHelper.getBuyPrice(start.getType());
         double distance = Vector2.distance(start.getPos(), end.getPos());
-        expectTrafficTime = distance / AVERAGE_MAX_SPEED;
+        expectTrafficTime = (distance - 2 * CHANGING_SPEED_DIST) / AVERAGE_MAX_SPEED
+                + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         double timeValueArg = PriceHelper.getTimeValueArg(expectTrafficTime);
         expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);
     }
@@ -67,7 +70,10 @@ public class Scheme {
     }
 
     public double getAverageProfit(Robot robot) {
-        double timeNoWait = Vector2.distance(robot.getPos(), start.getPos()) / AVERAGE_MAX_SPEED;
+        double distance = Vector2.distance(robot.getPos(), start.getPos());
+        double timeNoWait = (distance - 2 * CHANGING_SPEED_DIST) / AVERAGE_MAX_SPEED
+                + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
+        // double timeNoWait = distance / AVERAGE_MAX_SPEED;
         double timeWait = start.getRemainFrames() / 50;
         double expectWaitTime = Math.max(timeNoWait, timeWait * 13);
         double expectTime = expectWaitTime + expectTrafficTime;
