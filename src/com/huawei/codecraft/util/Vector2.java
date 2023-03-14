@@ -53,12 +53,16 @@ public class Vector2 {
         return new Vector2(a.x + b.x, a.y + b.y);
     }
 
-    public static Vector2 dot(Vector2 a, Vector2 b) {
-        return new Vector2(a.x * b.x, a.y * b.y);
+    public static double dot(Vector2 a, Vector2 b) {
+        return a.x * b.x + a.y * b.y;
     }
 
     public static Vector2 dot(Vector2 v, double n) {
         return new Vector2(v.x * n, v.y * n);
+    }
+
+    public static double cos(Vector2 a, Vector2 b) {
+        return Vector2.dot(a, b) / (a.length() * b.length());
     }
 
     @Override
