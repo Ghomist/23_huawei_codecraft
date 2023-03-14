@@ -24,6 +24,10 @@ public class Vector2 {
         y *= n;
     }
 
+    public double length() {
+        return Math.sqrt(x * x + y * y);
+    }
+
     public static Vector2 getPosFromGridIndex(int x, int y) {
         return new Vector2(y * 0.5f + 0.25f, 49.75f - x * 0.5f);
     }

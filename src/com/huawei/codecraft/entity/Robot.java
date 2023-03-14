@@ -22,7 +22,7 @@ public class Robot {
     public static final double AVOID_DIST = 2; // min is 5.3 * 2 = 1.06
     public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
-    public static final double STOP_DIST = AT_TABLE_DIST + 0.00098;
+    public static final double STOP_DIST = (AT_TABLE_DIST + 0.00098) * 0.15;
 
     public int id;
 
@@ -106,28 +106,32 @@ public class Robot {
             }
 
             double speedK = Math.cos(Math.abs(diff));
-            double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED - 2.10011;
+            // double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED -
+            // 2.10011;
+            double speed = MAX_FORWARD_SPEED;
             if (avoidImpact)
                 speed *= SLOW_DOWN_RATE;
             setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
 
             double dist = Vector2.distance(targetPos, pos);
-            boolean stop = dist < STOP_DIST;
+            boolean stop = dist < STOP_DIST * getLineSpeed().length() * getLineSpeed().length();
 
             if (stop) {
-                setForwardSpeed(-speed * speedK);
-                if (getTableID() == targetTableID) {
-                    if (targetTableID == scheme.start.id) {
-                        isWaitingProduce = true;
-                    } else {
-                        sell();
-                        scheme.finish();
-                        scheme = null;
-                    }
-                    targetPos = null;
-                }
+                // setForwardSpeed(-speed * speedK);
+                setForwardSpeed(MAX_BACKWARD_SPEED);
             } else {
                 setForwardSpeed(speed * speedK);
+            }
+
+            if (getTableID() == targetTableID) {
+                if (targetTableID == scheme.start.id) {
+                    isWaitingProduce = true;
+                } else {
+                    sell();
+                    scheme.finish();
+                    scheme = null;
+                }
+                targetPos = null;
             }
         } else {
             setForwardSpeed(0);
