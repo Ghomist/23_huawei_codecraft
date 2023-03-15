@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.huawei.codecraft.util.PriceHelper;
+import com.huawei.codecraft.util.RadiusHelper;
 import com.huawei.codecraft.util.Output;
 import com.huawei.codecraft.util.Vector2;
 
@@ -21,6 +22,7 @@ public class Robot {
     public static final double AT_TABLE_DIST = 0.4;
 
     public static final double AVOID_DIST = 1.5; // min is 5.3 * 2 = 1.06
+    public static final double AVOID_ROTATE = Math.PI / 8;
     public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
     public static final double STOP_DIST = (AT_TABLE_DIST) * 0.15;
@@ -98,18 +100,10 @@ public class Robot {
                 // Vector2 avoidPos = impactRobot.getPos();
                 // targetDir = Math.atan2(pos.y - avoidPos.y, pos.x - avoidPos.x);
                 // targetDir = Math.random() * Math.PI / 4 + Math.PI / 8;
-                targetDir = Math.PI / 8;
                 Vector2 other = impactRobot.getPos();
                 double avoidDir = Math.atan2(other.y - pos.y, other.x - pos.x);
-                double diff = avoidDir - dir;
-                if (diff >= Math.PI) {
-                    diff -= 2 * Math.PI;
-                } else if (diff <= -Math.PI) {
-                    diff += 2 * Math.PI;
-                }
-                if (diff > 0) {
-                    targetDir = -targetDir;
-                }
+                double diff = RadiusHelper.diff(dir, avoidDir);
+                targetDir = diff > 0 ? -AVOID_ROTATE : AVOID_ROTATE;
 
                 // if (random.nextBoolean()) {
                 // targetDir = -targetDir;
@@ -129,12 +123,7 @@ public class Robot {
                 targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             }
 
-            double diff = targetDir - dir;
-            if (diff >= Math.PI) {
-                diff -= 2 * Math.PI;
-            } else if (diff <= -Math.PI) {
-                diff += 2 * Math.PI;
-            }
+            double diff = RadiusHelper.diff(dir, targetDir);
 
             double speedK = Math.cos(Math.abs(diff));
             // double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED -
