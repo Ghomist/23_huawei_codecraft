@@ -152,7 +152,7 @@ public class GameController {
                     continue;
                 // in dangerous distance
                 if (r.hasItem()) {
-                    if (Vector2.distance(robot.getPos(), r.getPos()) <= Robot.AVOID_DIST) {
+                    if (robot.isGonnaImpact(r)) {
                         hasImpact = true;
                         robot.avoidImpact(r);
                         break;

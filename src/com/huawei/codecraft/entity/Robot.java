@@ -158,6 +158,10 @@ public class Robot {
         }
     }
 
+    public boolean isGonnaImpact(Robot other) {
+        return Vector2.distance(pos, other.getPos()) <= AVOID_DIST;
+    }
+
     public void avoidImpact(Robot impactRobot) {
         if (impactRobot != null) {
             avoidImpact = true;
