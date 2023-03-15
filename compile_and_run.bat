@@ -24,7 +24,6 @@ for /f "tokens=4 delims=,:} " %%a in (data.txt) do (
     set score=%%a
     rem set score=!score:~1!
     set /a sum+=score
-    echo %%a
 )
 
 echo ------------------ >> ..\out.txt
@@ -32,3 +31,6 @@ echo The sum is %sum% >> ..\out.txt
 type *.out >> ..\out.txt
 del *.out
 del data.txt
+
+cls
+echo The sum is %sum%
