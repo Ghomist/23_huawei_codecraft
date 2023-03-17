@@ -2,9 +2,7 @@ package com.huawei.codecraft.entity;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
-import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
 import com.huawei.codecraft.io.Output;
@@ -25,14 +23,11 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double AT_TABLE_DIST = 0.4;
 
-    public static final double AVOID_DIST = 1.5; // min is 5.3 * 2 = 1.06
-    public static final double AVOID_ROTATE = Math.PI / 8;
-    public static final double SLOW_DOWN_RATE = 0.86;
-    // public static final double AVOID_SPEED_OFFSET = 0.5;
-    public static final double STOP_DIST = (AT_TABLE_DIST);
-
-    public static final double TAO = 1; // alarm time (3 frames)
-    public static final double INV_TAO = 1 / TAO;
+    /// RVO2 params
+    public static final double RVO2_DIST = 4; // min is 5.3 * 2 = 1.06
+    public static final double RVO2_TAO = 1; // alarm time (3 frames)
+    public static final double INV_TAO = 1 / RVO2_TAO;
+    public static final double RVO2_ADJUST_RATE = 2;
 
     public int id;
 
@@ -108,10 +103,11 @@ public class Robot {
                     }
                 }
             }
-            avoidImpact(robots);
         } else {
             prefVelocity = new Vector2(0, 0);
         }
+        // RVO2
+        avoidImpact(robots);
 
         // diff to pref velocity
         double diff = RadianHelper.diff(dir, prefVelocity.radian());
@@ -130,7 +126,7 @@ public class Robot {
         Vector2 finalU = new Vector2(0, 0);
 
         for (Robot other : robots) {
-            if (other.id == id || Vector2.distance(pos, other.pos) > 4)
+            if (other.id == id || Vector2.distance(pos, other.pos) > RVO2_DIST)
                 continue;
 
             final Vector2 relativePosition = other.pos.subtract(pos);
@@ -204,10 +200,10 @@ public class Robot {
                 u = unitW.multiply(rr * invTimeStep - wLength);
             }
 
-            final Vector2 point = getLineSpeed().add(u);
+            final Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE, u);
             planes.add(new HalfPlane(new Line(point, direction), u));
 
-            finalU = finalU.add(2, u);
+            finalU = finalU.add(RVO2_ADJUST_RATE, u);
         }
 
         // final int lineFail = LinearProgramHelper.linearProgram2(lines,

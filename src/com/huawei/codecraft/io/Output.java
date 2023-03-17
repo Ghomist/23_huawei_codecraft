@@ -22,7 +22,7 @@ public class Output {
     }
 
     public static void debug(Object obj) {
-        if (!DEBUG_MODE)
+        if (DEBUG_MODE)
             System.err.println(obj);
     }
 }
