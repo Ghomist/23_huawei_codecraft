@@ -24,12 +24,12 @@ public class Robot {
     public static final double AT_TABLE_DIST = 0.4;
 
     /// RVO2 params
-    public static final boolean USE_RVO2 = false; // most priority
-    public static final boolean USE_RVO = true;
-    public static final double RVO2_DIST = 4; // min is 5.3 * 2 = 1.06
-    public static final double RVO2_TAO = 1; // alarm time (50 frames -> 1s)
+    public static final boolean USE_RVO2 = true; // most priority
+    public static final boolean USE_RVO = false;
+    public static final double RVO2_DIST = 5; // min is 5.3 * 2 = 1.06
+    public static final double RVO2_TAO = 1.5; // alarm time (50 frames -> 1s)
     public static final double INV_TAO = 1 / RVO2_TAO;
-    public static final double RVO2_ADJUST_RATE = 2;
+    public static final double RVO2_ADJUST_RATE = 1.5;
 
     public int id;
 
