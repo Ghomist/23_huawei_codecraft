@@ -3,6 +3,7 @@ package com.huawei.codecraft.entity;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
 import com.huawei.codecraft.io.Output;
@@ -24,8 +25,10 @@ public class Robot {
     public static final double AT_TABLE_DIST = 0.4;
 
     /// RVO2 params
+    public static final boolean USE_RVO2 = false; // most priority
+    public static final boolean USE_RVO = true;
     public static final double RVO2_DIST = 4; // min is 5.3 * 2 = 1.06
-    public static final double RVO2_TAO = 1; // alarm time (3 frames)
+    public static final double RVO2_TAO = 1; // alarm time (50 frames -> 1s)
     public static final double INV_TAO = 1 / RVO2_TAO;
     public static final double RVO2_ADJUST_RATE = 2;
 
@@ -39,18 +42,19 @@ public class Robot {
     private float dir;
     private Vector2 v;
     private Vector2 pos;
-    private Vector2 prefVelocity = new Vector2(0, 0);
+    private Vector2 prefVelocity = Vector2.ZERO;
 
     private Scheme scheme;
 
     private LinkedList<RobotTarget> targets = new LinkedList<>();
 
+    private List<Line> lines = new LinkedList<>();
     private List<HalfPlane> planes = new LinkedList<>();
     private List<String> cmdList = new LinkedList<>();
 
     public Robot() {
-        this.pos = new Vector2(0, 0);
-        this.v = new Vector2(0, 0);
+        this.pos = Vector2.ZERO;
+        this.v = Vector2.ZERO;
     }
 
     public void update(int id, String info) {
@@ -65,17 +69,19 @@ public class Robot {
         w = Float.parseFloat(parts[4]);
         float vx = Float.parseFloat(parts[5]);
         float vy = Float.parseFloat(parts[6]);
-        v.set(vx, vy);
+        v = new Vector2(vx, vy);
         dir = Float.parseFloat(parts[7]);
 
         float x = Float.parseFloat(parts[8]);
         float y = Float.parseFloat(parts[9]);
-        pos.set(x, y);
+        pos = new Vector2(x, y);
 
         cmdList.clear();
     }
 
     public void schedule(Robot[] robots) {
+        // if (id != 0)
+        // return;
         if (targets.size() > 0) {
             RobotTarget targetRobot = targets.getFirst();
             Vector2 targetPos = targetRobot.pos;
@@ -104,7 +110,7 @@ public class Robot {
                 }
             }
         } else {
-            prefVelocity = new Vector2(0, 0);
+            prefVelocity = Vector2.ZERO;
         }
         // RVO2
         avoidImpact(robots);
@@ -121,9 +127,10 @@ public class Robot {
     }
 
     private void avoidImpact(Robot[] robots) { // RVO2
+        lines.clear();
         planes.clear();
 
-        Vector2 finalU = new Vector2(0, 0);
+        Vector2 finalU = Vector2.ZERO;
 
         for (Robot other : robots) {
             if (other.id == id || Vector2.distance(pos, other.pos) > RVO2_DIST)
@@ -154,14 +161,15 @@ public class Robot {
                 // 检测到要发生碰撞
                 // 前端碰撞
                 if (dotProduct1 < 0.0 && dotProduct1 * dotProduct1 > rr2 * wLen2) { // ?
+                    // Output.debug("forward");
                     final double wLength = Math.sqrt(wLen2);
                     final Vector2 unitW = w.multiply(1.0 / wLength);
 
                     direction = new Vector2(unitW.y, -unitW.x);
                     u = unitW.multiply(rr * INV_TAO - wLength);
-                    Output.debug("forward");
                 } else if (relativePosition.multiply(INV_TAO).length2()
                         - Math.pow(rr * INV_TAO, 2) < relativeVelocity.length2()) {
+                    // Output.debug("side");
                     // 侧边碰撞
                     final double leg = Math.sqrt(dist2 - rr2);
 
@@ -181,12 +189,11 @@ public class Robot {
 
                     final double dotProduct2 = relativeVelocity.dot(direction);
                     u = direction.multiply(dotProduct2).subtract(relativeVelocity);
-                    Output.debug("side");
                 } else {
                     continue;
                 }
             } else {
-                Output.debug("Impacted！");
+                // Output.debug("Impacted！");
                 // Collision. Project on cut-off circle of time timeStep.
                 final double invTimeStep = 1.0 / 0.02;
 
@@ -201,14 +208,24 @@ public class Robot {
             }
 
             final Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE, u);
+            // lines.add(new HalfPlane(new Line(point, direction), u));
+            lines.add(new Line(point, direction));
             planes.add(new HalfPlane(new Line(point, direction), u));
 
             finalU = finalU.add(RVO2_ADJUST_RATE, u);
         }
 
+        if (USE_RVO2) {
+            Vector2 p = LinearProgramHelper.shortestDistance(planes, prefVelocity);
+            prefVelocity = prefVelocity.add(p);
+        } else if (USE_RVO) {
+            if (planes.size() != 0) {
+                prefVelocity = getLineSpeed().add(finalU);
+            }
+        }
+
         // final int lineFail = LinearProgramHelper.linearProgram2(lines,
-        // Vector2.getFromRadian(dir, MAX_FORWARD_SPEED),
-        // false);
+        // Vector2.getFromRadian(dir, MAX_FORWARD_SPEED), true);
 
         // if (lineFail < lines.size()) {
         // LinearProgramHelper.linearProgram3(lines, 0, lineFail);
@@ -216,8 +233,7 @@ public class Robot {
 
         // prefVelocity = LinearProgramHelper.newVelocity;
 
-        if (planes.size() != 0)
-            prefVelocity = getLineSpeed().add(finalU);
+        // prefVelocity = LinearProgramHelper.newVelocity;
     }
 
     private void finishTarget() {

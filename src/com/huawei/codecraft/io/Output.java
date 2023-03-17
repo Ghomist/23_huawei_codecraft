@@ -4,7 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.PrintStream;
 
 public class Output {
-    public static final boolean DEBUG_MODE = false;
+    public static final boolean DEBUG_MODE = true;
 
     public static final PrintStream out = new PrintStream(new BufferedOutputStream(System.out));
 

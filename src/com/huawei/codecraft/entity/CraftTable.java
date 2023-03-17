@@ -30,7 +30,7 @@ public class CraftTable {
 
         float x = Float.parseFloat(infos[1]);
         float y = Float.parseFloat(infos[2]);
-        pos.set(x, y);
+        pos = new Vector2(x, y);
 
         remainFrames = Integer.parseInt(infos[3]);
         materialStatus = Integer.parseInt(infos[4]);

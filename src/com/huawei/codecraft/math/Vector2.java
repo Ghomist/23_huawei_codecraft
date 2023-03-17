@@ -1,8 +1,10 @@
 package com.huawei.codecraft.math;
 
 public class Vector2 {
-    public double x;
-    public double y;
+    public static final Vector2 ZERO = new Vector2();
+
+    public final double x;
+    public final double y;
 
     public Vector2() {
         x = 0;
@@ -17,11 +19,6 @@ public class Vector2 {
     public Vector2(Vector2 v) {
         x = v.x;
         y = v.y;
-    }
-
-    public void set(double x, double y) {
-        this.x = x;
-        this.y = y;
     }
 
     public Vector2 add(Vector2 v) {
