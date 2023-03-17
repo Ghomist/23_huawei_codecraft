@@ -15,7 +15,7 @@ public class Line {
     }
 
     public double getK() {
-        return point.y / point.x;
+        return dir.y / dir.x;
     }
 
     public Vector2 intersection(Line other) {

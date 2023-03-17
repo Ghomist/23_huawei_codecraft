@@ -22,6 +22,6 @@ public class HalfPlane {
 
     public boolean isOnPlane(Vector2 pos) {
         Vector2 v = pos.subtract(line.point);
-        return v.dot(dir) >= 0;
+        return v.dot(dir) >= -0.000001;
     }
 }
