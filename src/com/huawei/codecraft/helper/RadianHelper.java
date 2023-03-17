@@ -1,6 +1,6 @@
-package com.huawei.codecraft.util;
+package com.huawei.codecraft.helper;
 
-public class RadiusHelper {
+public class RadianHelper {
     // result is the angle from start to end
     // positive is CCW
     // negative is CW

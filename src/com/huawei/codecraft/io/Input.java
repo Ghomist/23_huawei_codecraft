@@ -1,4 +1,4 @@
-package com.huawei.codecraft.util;
+package com.huawei.codecraft.io;
 
 import java.util.Scanner;
 

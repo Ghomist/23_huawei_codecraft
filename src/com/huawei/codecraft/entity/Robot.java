@@ -4,10 +4,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import com.huawei.codecraft.util.PriceHelper;
-import com.huawei.codecraft.util.RadiusHelper;
-import com.huawei.codecraft.util.Output;
-import com.huawei.codecraft.util.Vector2;
+import com.huawei.codecraft.helper.LinearProgramHelper;
+import com.huawei.codecraft.helper.PriceHelper;
+import com.huawei.codecraft.helper.RadianHelper;
+import com.huawei.codecraft.io.Output;
+import com.huawei.codecraft.math.HalfPlane;
+import com.huawei.codecraft.math.Line;
+import com.huawei.codecraft.math.LineSegment;
+import com.huawei.codecraft.math.Vector2;
 
 public class Robot {
 
@@ -25,11 +29,14 @@ public class Robot {
     public static final double AVOID_ROTATE = Math.PI / 8;
     public static final double SLOW_DOWN_RATE = 0.86;
     // public static final double AVOID_SPEED_OFFSET = 0.5;
-    public static final double STOP_DIST = (AT_TABLE_DIST) * 0.15;
+    public static final double STOP_DIST = (AT_TABLE_DIST);
+
+    public static final double TAO = 1; // alarm time (3 frames)
+    public static final double INV_TAO = 1 / TAO;
 
     public int id;
 
-    private int tableType;
+    private int tableID;
     private int item;
     private float timeValueArg;
     private float impactValueArg;
@@ -37,17 +44,13 @@ public class Robot {
     private float dir;
     private Vector2 v;
     private Vector2 pos;
+    private Vector2 prefVelocity = new Vector2(0, 0);
 
-    private boolean isWaitingProduce = false;
-    private Scheme scheme = null;
-    private Vector2 targetPos = null;
-    private int targetTableID = -1;
+    private Scheme scheme;
 
-    private boolean avoidImpact = false;
-    private Robot impactRobot = null;
+    private LinkedList<RobotTarget> targets = new LinkedList<>();
 
-    // private Random random = new Random();
-
+    private List<HalfPlane> planes = new LinkedList<>();
     private List<String> cmdList = new LinkedList<>();
 
     public Robot() {
@@ -60,7 +63,7 @@ public class Robot {
 
         String[] parts = info.split(" ");
 
-        tableType = Integer.parseInt(parts[0]);
+        tableID = Integer.parseInt(parts[0]);
         item = parts[1].charAt(0) - '0';
         timeValueArg = Float.parseFloat(parts[2]);
         impactValueArg = Float.parseFloat(parts[3]);
@@ -77,109 +80,171 @@ public class Robot {
         cmdList.clear();
     }
 
-    public void schedule() {
-        if (scheme != null) {
-            if (!hasItem()) {
-                setTargetTable(scheme.start);
-            } else {
-                setTargetTable(scheme.end);
-            }
-        }
-        if (isWaitingProduce) {
-            if (getTableID() == targetTableID) {
-                if (scheme != null && scheme.start.hasProduction()) {
-                    buy();
-                    scheme.onSending();
-                    isWaitingProduce = false;
-                }
-            }
-        }
-        if (targetPos != null) {
-            double targetDir;
-            if (avoidImpact) {
-                // Vector2 avoidPos = impactRobot.getPos();
-                // targetDir = Math.atan2(pos.y - avoidPos.y, pos.x - avoidPos.x);
-                // targetDir = Math.random() * Math.PI / 4 + Math.PI / 8;
-                Vector2 other = impactRobot.getPos();
-                double avoidDir = Math.atan2(other.y - pos.y, other.x - pos.x);
-                double diff = RadiusHelper.diff(dir, avoidDir);
-                targetDir = diff > 0 ? -AVOID_ROTATE : AVOID_ROTATE;
+    public void schedule(Robot[] robots) {
+        if (targets.size() > 0) {
+            RobotTarget targetRobot = targets.getFirst();
+            Vector2 targetPos = targetRobot.pos;
 
-                // if (random.nextBoolean()) {
-                // targetDir = -targetDir;
-                // }
-                if (Vector2.cos(Vector2.getFromRadius(impactRobot.getDir()), Vector2.getFromRadius(dir)) > 0) {
-                    targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
-                    avoidImpact = false;
+            double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+            double prefSpeed = MAX_FORWARD_SPEED / AT_TABLE_DIST * Vector2.distance(targetPos, pos);
+            prefVelocity = Vector2.getFromRadian(targetDir,
+                    prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
+
+            if (isAtTable()) {
+                if (targetRobot.table == null) {
+                    // if (distToTarget < AT_TABLE_DIST / 2)
+                    finishTarget();
                 } else {
-                    targetDir += dir;
-                    if (dir >= Math.PI) {
-                        dir -= 2 * Math.PI;
-                    } else if (dir <= -Math.PI) {
-                        dir += 2 * Math.PI;
+                    if (getTableID() == targetRobot.table.id) {
+                        if (hasItem()) {
+                            sell();
+                            finishTarget();
+                            scheme.finish();
+                        } else if (targetRobot.table.hasProduction()) {
+                            buy();
+                            scheme.onSending();
+                            finishTarget();
+                        }
                     }
                 }
-            } else {
-                targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             }
+            avoidImpact(robots);
+        } else {
+            prefVelocity = new Vector2(0, 0);
+        }
 
-            double diff = RadiusHelper.diff(dir, targetDir);
+        // diff to pref velocity
+        double diff = RadianHelper.diff(dir, prefVelocity.radian());
 
-            double speedK = Math.cos(Math.abs(diff));
-            // double speed = speedK >= 0 ? MAX_FORWARD_SPEED : MAX_BACKWARD_SPEED -
-            // 2.10011;
-            double speed = MAX_FORWARD_SPEED;
-            if (avoidImpact)
-                speed *= SLOW_DOWN_RATE;
-            setRotateSpeed(MAX_CCW_ROTATE_SPEED * diff);
+        // set speed to pref velocity
+        double speedK = Math.cos(Math.abs(diff));
+        setForwardSpeed(speedK * MAX_FORWARD_SPEED);
 
-            double dist = Vector2.distance(targetPos, pos);
-            boolean stop = dist < STOP_DIST * getLineSpeed().length() * getLineSpeed().length();
+        // set rotate to pref velocity
+        setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
+    }
 
-            if (stop) {
-                // setForwardSpeed(-speed * speedK);
-                setForwardSpeed(MAX_BACKWARD_SPEED);
-            } else {
-                setForwardSpeed(speed * speedK);
-            }
+    private void avoidImpact(Robot[] robots) { // RVO2
+        planes.clear();
 
-            if (getTableID() == targetTableID) {
-                if (targetTableID == scheme.start.id) {
-                    isWaitingProduce = true;
+        Vector2 finalU = new Vector2(0, 0);
+
+        for (Robot other : robots) {
+            if (other.id == id || Vector2.distance(pos, other.pos) > 4)
+                continue;
+
+            final Vector2 relativePosition = other.pos.subtract(pos);
+            final Vector2 relativeVelocity = getLineSpeed().subtract(other.getLineSpeed());
+            final double dist2 = relativePosition.length2();
+            final double rr = getRadius() + other.getRadius();
+            final double rr2 = rr * rr;
+
+            // 在三角锥的外面
+            final double theta = Math.abs(Math.asin(rr / relativePosition.length()));
+            final double diff = Math.acos(Vector2.cos(relativePosition, relativeVelocity));
+            if (diff > theta)
+                continue;
+
+            final Vector2 direction;
+            final Vector2 u;
+
+            // 还未发生碰撞
+            if (dist2 > rr2) {
+                // 圆中心到相对速度
+                final Vector2 w = relativeVelocity.subtract(INV_TAO, relativePosition);
+                final double wLen2 = w.length2();
+                final double dotProduct1 = w.dot(relativePosition);
+
+                // 检测到要发生碰撞
+                // 前端碰撞
+                if (dotProduct1 < 0.0 && dotProduct1 * dotProduct1 > rr2 * wLen2) { // ?
+                    final double wLength = Math.sqrt(wLen2);
+                    final Vector2 unitW = w.multiply(1.0 / wLength);
+
+                    direction = new Vector2(unitW.y, -unitW.x);
+                    u = unitW.multiply(rr * INV_TAO - wLength);
+                    Output.debug("forward");
+                } else if (relativePosition.multiply(INV_TAO).length2()
+                        - Math.pow(rr * INV_TAO, 2) < relativeVelocity.length2()) {
+                    // 侧边碰撞
+                    final double leg = Math.sqrt(dist2 - rr2);
+
+                    if (Vector2.det(relativePosition, w) > 0.0) {
+                        // Project on left leg. 方向向量投影到 leg
+                        direction = new Vector2(
+                                relativePosition.x * leg - relativePosition.y * rr,
+                                relativePosition.x * rr + relativePosition.y * leg)
+                                .multiply(1.0 / dist2);
+                    } else {
+                        // Project on right leg.
+                        direction = new Vector2(
+                                relativePosition.x * leg + relativePosition.y * rr,
+                                -relativePosition.x * rr + relativePosition.y * leg)
+                                .multiply(-1.0 / dist2);
+                    }
+
+                    final double dotProduct2 = relativeVelocity.dot(direction);
+                    u = direction.multiply(dotProduct2).subtract(relativeVelocity);
+                    Output.debug("side");
                 } else {
-                    sell();
-                    scheme.finish();
-                    scheme = null;
+                    continue;
                 }
-                targetPos = null;
+            } else {
+                Output.debug("Impacted！");
+                // Collision. Project on cut-off circle of time timeStep.
+                final double invTimeStep = 1.0 / 0.02;
+
+                // Vector from cutoff center to relative velocity.
+                final Vector2 w = relativeVelocity.subtract(invTimeStep, relativePosition);
+
+                final double wLength = w.length();
+                final Vector2 unitW = w.multiply(1.0 / wLength);
+
+                direction = new Vector2(unitW.y, -unitW.x);
+                u = unitW.multiply(rr * invTimeStep - wLength);
             }
-        } else {
-            setForwardSpeed(0);
+
+            final Vector2 point = getLineSpeed().add(u);
+            planes.add(new HalfPlane(new Line(point, direction), u));
+
+            finalU = finalU.add(2, u);
         }
+
+        // final int lineFail = LinearProgramHelper.linearProgram2(lines,
+        // Vector2.getFromRadian(dir, MAX_FORWARD_SPEED),
+        // false);
+
+        // if (lineFail < lines.size()) {
+        // LinearProgramHelper.linearProgram3(lines, 0, lineFail);
+        // }
+
+        // prefVelocity = LinearProgramHelper.newVelocity;
+
+        if (planes.size() != 0)
+            prefVelocity = getLineSpeed().add(finalU);
     }
 
-    public boolean isGonnaImpact(Robot other) {
-        return Vector2.distance(pos, other.getPos()) <= AVOID_DIST;
+    private void finishTarget() {
+        targets.removeFirst();
     }
 
-    public void avoidImpact(Robot impactRobot) {
-        if (impactRobot != null) {
-            avoidImpact = true;
-            this.impactRobot = impactRobot;
-        } else {
-            avoidImpact = false;
-            this.impactRobot = null;
-        }
-    }
-
-    public void setTargetScheme(Scheme scheme) {
+    public void setScheme(Scheme scheme) {
         this.scheme = scheme;
+        targets.addLast(new RobotTarget(scheme.start));
+        targets.addLast(new RobotTarget(scheme.end));
         scheme.setPending();
     }
 
-    public void setTargetTable(CraftTable table) {
-        targetPos = table.getPos();
-        targetTableID = table.id;
+    public LineSegment getCurrentPath() {
+        return new LineSegment(pos, targets.getFirst().pos);
+    }
+
+    public void setPrefForwardSpeed(double speed) {
+
+    }
+
+    public void setPrefRotateSpeed(double speed) {
+        cmdList.add("rotate " + id + ' ' + speed);
     }
 
     public void setForwardSpeed(double speed) {
@@ -191,8 +256,7 @@ public class Robot {
     }
 
     public void buy() {
-        if (!hasItem())
-            cmdList.add("buy " + id);
+        cmdList.add("buy " + id);
     }
 
     public void sell() {
@@ -204,11 +268,11 @@ public class Robot {
     }
 
     public boolean isAtTable() {
-        return tableType != -1;
+        return tableID != -1;
     }
 
     public int getTableID() {
-        return tableType;
+        return tableID;
     }
 
     public boolean hasItem() {
@@ -239,12 +303,8 @@ public class Robot {
         return dir;
     }
 
-    public boolean hasTarget() {
-        return targetPos != null;
-    }
-
     public boolean isFree() {
-        return scheme == null;
+        return targets.size() == 0;
     }
 
     public List<String> getCommands() {
@@ -253,5 +313,17 @@ public class Robot {
 
     public double getRadius() {
         return hasItem() ? 0.53 : 0.4;
+    }
+
+    public boolean betterThan(Robot other) {
+        if (this.hasItem() && !other.hasItem()) {
+            return true;
+        } else if (!this.hasItem() && other.hasItem()) {
+            return false;
+        } else if (this.hasItem() && other.hasItem()) {
+            return getItem() > other.getItem();
+        } else {
+            return true;
+        }
     }
 }

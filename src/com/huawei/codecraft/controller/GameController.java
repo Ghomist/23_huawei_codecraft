@@ -8,9 +8,10 @@ import com.huawei.codecraft.entity.CraftTable;
 import com.huawei.codecraft.entity.GameMap;
 import com.huawei.codecraft.entity.Robot;
 import com.huawei.codecraft.entity.Scheme;
-import com.huawei.codecraft.util.Input;
-import com.huawei.codecraft.util.Output;
-import com.huawei.codecraft.util.Vector2;
+import com.huawei.codecraft.io.Input;
+import com.huawei.codecraft.io.Output;
+import com.huawei.codecraft.math.LineSegment;
+import com.huawei.codecraft.math.Vector2;
 
 public class GameController {
 
@@ -67,7 +68,8 @@ public class GameController {
             update();
             schedule();
             for (Robot robot : robots) {
-                robot.schedule();
+                robot.schedule(robots);
+                // robot.avoidImpact(robots);
             }
             sendCommands();
         }
@@ -128,7 +130,6 @@ public class GameController {
     private void schedule() {
         for (Robot robot : robots) {
             if (robot.isFree()) {
-                // int target = new Random().nextInt(craftTableCount);
                 schemes.sort((sa, sb) -> {
                     if (sa.isAvailable(robot) && !sb.isAvailable(robot)) {
                         return -1;
@@ -142,25 +143,9 @@ public class GameController {
                 });
                 Scheme pendingScheme = schemes.get(0);
                 if (pendingScheme.isAvailable(robot)) {
-                    robot.setTargetScheme(pendingScheme);
+                    robot.setScheme(pendingScheme);
                 }
             }
-
-            boolean hasImpact = false;
-            for (Robot r : robots) {
-                if (r.id == robot.id)
-                    continue;
-                // in dangerous distance
-                if (r.hasItem()) {
-                    if (robot.isGonnaImpact(r)) {
-                        hasImpact = true;
-                        robot.avoidImpact(r);
-                        break;
-                    }
-                }
-            }
-            if (!hasImpact)
-                robot.avoidImpact(null);
         }
     }
 

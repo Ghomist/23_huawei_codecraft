@@ -1,9 +1,9 @@
 package com.huawei.codecraft.entity;
 
 import com.huawei.codecraft.controller.GameController;
-import com.huawei.codecraft.util.Output;
-import com.huawei.codecraft.util.PriceHelper;
-import com.huawei.codecraft.util.Vector2;
+import com.huawei.codecraft.helper.PriceHelper;
+import com.huawei.codecraft.io.Output;
+import com.huawei.codecraft.math.Vector2;
 
 public class Scheme {
 
@@ -14,6 +14,7 @@ public class Scheme {
     public CraftTable start;
     public CraftTable end;
 
+    private int itemType;
     private GameController controller;
 
     private boolean isPending = false;
@@ -25,6 +26,7 @@ public class Scheme {
         this.controller = controller;
         this.start = start;
         this.end = end;
+        this.itemType = start.getType();
         int sellPrice = PriceHelper.getSellPrice(start.getType());
         int buyPrice = PriceHelper.getBuyPrice(start.getType());
         double distance = Vector2.distance(start.getPos(), end.getPos());
@@ -80,10 +82,14 @@ public class Scheme {
         return expectProfit / expectTime;
     }
 
+    public int getType() {
+        return itemType;
+    }
+
     public void setPending() {
         isPending = true;
         start.setOrder(true);
-        end.setPendingMaterial(start.getType());
+        end.setPendingMaterial(itemType);
     }
 
     public void onSending() {
@@ -92,7 +98,7 @@ public class Scheme {
 
     public void finish() {
         isPending = false;
-        end.finishPendingMaterial(start.getType());
+        end.finishPendingMaterial(itemType);
     }
 
     public boolean isAvailable(Robot robot) {
@@ -100,6 +106,6 @@ public class Scheme {
                 + Vector2.distance(robot.getPos(), start.getPos()) / AVERAGE_MAX_SPEED
                 && !isPending
                 && start.isProducingOrFinish()
-                && !end.hasMaterial(start.getType()) && !start.isOrdered();
+                && !end.hasMaterial(itemType) && !start.isOrdered();
     }
 }
