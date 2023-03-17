@@ -12,14 +12,16 @@ public class CraftTable {
     private int remainFrames;
     private boolean hasProduction;
     private int materialStatus;
+    private boolean dangerous = false;
 
     private boolean[] pendingMaterial = new boolean[10];
     private boolean isOrdered = false;
 
-    public CraftTable(int id, int type, Vector2 pos) {
+    public CraftTable(int id, int type, Vector2 pos, boolean dangerous) {
         this.pos = pos;
         this.id = id;
         this.type = type;
+        this.dangerous = dangerous;
     }
 
     public void update(String info) {

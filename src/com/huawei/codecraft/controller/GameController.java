@@ -46,7 +46,9 @@ public class GameController {
                         map.SetGridType(x, y, 0);
                         break;
                     default:
-                        tables.add(new CraftTable(tables.size(), c - '0', Vector2.getPosFromGridIndex(x, y)));
+                        boolean nearByWall = x == 0 || x == 99 || y == 0 || y == 99;
+                        tables.add(
+                                new CraftTable(tables.size(), c - '0', Vector2.getPosFromGridIndex(x, y), nearByWall));
                         map.SetGridType(x, y, c - '0');
                         break;
                 }

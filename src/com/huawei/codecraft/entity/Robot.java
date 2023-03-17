@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.huawei.codecraft.helper.LinearProgramHelper;
+import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
 import com.huawei.codecraft.math.HalfPlane;
@@ -86,7 +87,8 @@ public class Robot {
             Vector2 targetPos = targetRobot.pos;
 
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
-            double prefSpeed = MAX_FORWARD_SPEED / AT_TABLE_DIST * Vector2.distance(targetPos, pos);
+            double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
+            double prefSpeed = MathHelper.clamp(MAX_BACKWARD_SPEED, MAX_FORWARD_SPEED, dist * dist);
             prefVelocity = Vector2.getFromRadian(targetDir,
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
@@ -323,7 +325,7 @@ public class Robot {
     }
 
     public double getRadius() {
-        return hasItem() ? 0.53 : 0.4;
+        return hasItem() ? 0.65 : 0.4;
     }
 
     public boolean betterThan(Robot other) {
