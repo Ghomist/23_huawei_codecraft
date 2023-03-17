@@ -2,7 +2,6 @@ package com.huawei.codecraft.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import com.huawei.codecraft.entity.CraftTable;
 import com.huawei.codecraft.entity.GameMap;
@@ -10,7 +9,6 @@ import com.huawei.codecraft.entity.Robot;
 import com.huawei.codecraft.entity.Scheme;
 import com.huawei.codecraft.io.Input;
 import com.huawei.codecraft.io.Output;
-import com.huawei.codecraft.math.LineSegment;
 import com.huawei.codecraft.math.Vector2;
 
 public class GameController {

@@ -1,7 +1,5 @@
 package com.huawei.codecraft.entity;
 
-import java.util.List;
-
 import com.huawei.codecraft.math.Vector2;
 import com.huawei.codecraft.util.BitCalculator;
 

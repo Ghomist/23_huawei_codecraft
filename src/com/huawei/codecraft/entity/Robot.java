@@ -6,7 +6,6 @@ import java.util.List;
 import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
-import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
