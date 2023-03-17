@@ -9,6 +9,28 @@ import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.Vector2;
 
 public class Main {
+
+    private static final int CNT = 20;
+
+    public static double getTime(int a, int b) {
+        return 0;
+    }
+
+    public static double getMax(int r1, int r2, int r3, int r4, double t) {
+        double tMin1 = Double.MAX_VALUE;
+        int minTable1 = 0;
+        for (int i = 0; i < CNT; i++) {
+            if (i == r1)
+                continue;
+            double t1 = getTime(r1, i);
+            if (t1 < tMin1) {
+                tMin1 = t1;
+                minTable1 = i;
+            }
+        }
+        return 0;
+    }
+
     public static void main(String[] args) {
         System.out.println("Hello Debug...");
         System.out.println("测试：线性规划");
