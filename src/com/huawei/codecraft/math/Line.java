@@ -19,15 +19,15 @@ public class Line {
     }
 
     public Vector2 intersection(Line other) {
-        double x1 = point.x;
-        double y1 = point.y;
-        double x2 = other.point.x;
-        double y2 = other.point.y;
-        double k1 = getK();
-        double k2 = other.getK();
-        double x = (y1 - y2 - k1 * x1 + k2 * x2) / (k2 - k1);
-        double y = y1 - k1 * (x1 - x);
-        return new Vector2(x, y);
+        Vector2 p1 = point, v1 = dir, p2 = other.point, v2 = other.dir;
+        double cross = v1.cross(v2);
+        if (cross == 0) { // 两条直线平行
+            return null;
+        } else {
+            Vector2 diff = p2.subtract(p1);
+            double t1 = diff.cross(v2) / cross;
+            return p1.add(v1.multiply(t1));
+        }
     }
 
     public double distanceTo(Vector2 point) { // TODO

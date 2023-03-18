@@ -7,6 +7,7 @@ import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
@@ -27,7 +28,8 @@ public class Robot {
     /// RVO2 params
     public static final boolean USE_RVO2 = true; // most priority
     public static final boolean USE_RVO = false;
-    public static final double RVO2_DIST = 5; // min is 5.3 * 2 = 1.06
+    public static final double RVO2_AVOID_DIST = 5; // min is 5.3 * 2 = 1.06
+    public static final double RVO2_AVOID_DIST_WALL = RVO2_AVOID_DIST;
     public static final double RVO2_TAO = 1.5; // alarm time (50 frames -> 1s)
     public static final double INV_TAO = 1 / RVO2_TAO;
     public static final double RVO2_ADJUST_RATE = 1.5;
@@ -48,7 +50,6 @@ public class Robot {
 
     private LinkedList<RobotTarget> targets = new LinkedList<>();
 
-    private List<Line> lines = new LinkedList<>();
     private List<HalfPlane> planes = new LinkedList<>();
     private List<String> cmdList = new LinkedList<>();
 
@@ -128,13 +129,51 @@ public class Robot {
     }
 
     private void avoidImpact(Robot[] robots) { // RVO2
-        lines.clear();
         planes.clear();
 
         Vector2 finalU = Vector2.ZERO;
 
+        // detect the wall (edge)
+        if (pos.y <= RVO2_AVOID_DIST_WALL) {
+            final double relativeDist = -pos.y * INV_TAO;
+            if (getLineSpeed().y < relativeDist) {
+                Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
+                Vector2 point = getLineSpeed().add(1.35, u);
+                planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.UP));
+                finalU = finalU.add(u);
+            }
+        }
+        if (pos.y >= 50 - RVO2_AVOID_DIST_WALL) {
+            final double relativeDist = (50 - pos.y) * INV_TAO;
+            if (getLineSpeed().y > relativeDist) {
+                Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
+                Vector2 point = getLineSpeed().add(1.35, u);
+                planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.DOWN));
+                finalU = finalU.add(u);
+            }
+        }
+        if (pos.x <= RVO2_AVOID_DIST_WALL) {
+            final double relativeDist = -pos.x * INV_TAO;
+            if (getLineSpeed().x < relativeDist) {
+                Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
+                Vector2 point = getLineSpeed().add(1.35, u);
+                planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.RIGHT));
+                finalU = finalU.add(u);
+            }
+        }
+        if (pos.x >= 50 - RVO2_AVOID_DIST_WALL) {
+            final double relativeDist = (50 - pos.x) * INV_TAO;
+            if (getLineSpeed().x > relativeDist) {
+                Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
+                Vector2 point = getLineSpeed().add(1.35, u);
+                planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.LEFT));
+                finalU = finalU.add(u);
+            }
+        }
+
+        // detect other robots
         for (Robot other : robots) {
-            if (other.id == id || Vector2.distance(pos, other.pos) > RVO2_DIST)
+            if (other.id == id || Vector2.distance(pos, other.pos) > RVO2_AVOID_DIST)
                 continue;
 
             final Vector2 relativePosition = other.pos.subtract(pos);
@@ -174,7 +213,7 @@ public class Robot {
                     // 侧边碰撞
                     final double leg = Math.sqrt(dist2 - rr2);
 
-                    if (Vector2.det(relativePosition, w) > 0.0) {
+                    if (Vector2.cross(relativePosition, w) > 0.0) {
                         // Project on left leg. 方向向量投影到 leg
                         direction = new Vector2(
                                 relativePosition.x * leg - relativePosition.y * rr,
@@ -210,7 +249,6 @@ public class Robot {
 
             final Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE, u);
             // lines.add(new HalfPlane(new Line(point, direction), u));
-            lines.add(new Line(point, direction));
             planes.add(new HalfPlane(new Line(point, direction), u));
 
             finalU = finalU.add(RVO2_ADJUST_RATE, u);
@@ -224,17 +262,6 @@ public class Robot {
                 prefVelocity = getLineSpeed().add(finalU);
             }
         }
-
-        // final int lineFail = LinearProgramHelper.linearProgram2(lines,
-        // Vector2.getFromRadian(dir, MAX_FORWARD_SPEED), true);
-
-        // if (lineFail < lines.size()) {
-        // LinearProgramHelper.linearProgram3(lines, 0, lineFail);
-        // }
-
-        // prefVelocity = LinearProgramHelper.newVelocity;
-
-        // prefVelocity = LinearProgramHelper.newVelocity;
     }
 
     private void finishTarget() {

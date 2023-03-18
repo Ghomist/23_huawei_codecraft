@@ -42,8 +42,8 @@ public class LinearProgramHelper {
         double tRight = sqrtDiscriminant - dotProduct;
 
         for (int i = 0; i < lineNo; i++) {
-            final double denominator = Vector2.det(lines.get(lineNo).dir, lines.get(i).dir);
-            final double numerator = Vector2.det(lines.get(i).dir,
+            final double denominator = Vector2.cross(lines.get(lineNo).dir, lines.get(i).dir);
+            final double numerator = Vector2.cross(lines.get(i).dir,
                     lines.get(lineNo).point.subtract(lines.get(i).point));
 
             if (Math.abs(denominator) <= RVO_EPSILON) {
@@ -123,7 +123,7 @@ public class LinearProgramHelper {
         }
 
         for (int lineNo = 0; lineNo < lines.size(); lineNo++) {
-            if (Vector2.det(lines.get(lineNo).dir, lines.get(lineNo).point.subtract(newVelocity)) > 0.0) {
+            if (Vector2.cross(lines.get(lineNo).dir, lines.get(lineNo).point.subtract(newVelocity)) > 0.0) {
                 // Result does not satisfy constraint i. Compute new optimal result.
                 final Vector2 tempResult = newVelocity;
                 if (!linearProgram1(lines, lineNo, optimizationVelocity, optimizeDirection)) {
@@ -149,7 +149,7 @@ public class LinearProgramHelper {
         double distance = 0.0;
 
         for (int i = beginLine; i < lines.size(); i++) {
-            if (Vector2.det(lines.get(i).dir, lines.get(i).point.subtract(newVelocity)) > distance) {
+            if (Vector2.cross(lines.get(i).dir, lines.get(i).point.subtract(newVelocity)) > distance) {
                 // Result does not satisfy constraint of line i.
                 final List<Line> projectedLines = new ArrayList<>(numObstacleLines);
                 for (int j = 0; j < numObstacleLines; j++) {
@@ -157,7 +157,7 @@ public class LinearProgramHelper {
                 }
 
                 for (int j = numObstacleLines; j < i; j++) {
-                    final double determinant = Vector2.det(lines.get(i).dir, lines.get(j).dir);
+                    final double determinant = Vector2.cross(lines.get(i).dir, lines.get(j).dir);
                     final Vector2 point;
 
                     if (Math.abs(determinant) <= RVO_EPSILON) {
@@ -176,7 +176,7 @@ public class LinearProgramHelper {
                                         lines
                                                 .get(i).dir
                                                 .multiply(
-                                                        Vector2.det(
+                                                        Vector2.cross(
                                                                 lines.get(j).dir,
                                                                 lines.get(i).point.subtract(lines.get(j).point))
                                                                 / determinant));
@@ -198,7 +198,7 @@ public class LinearProgramHelper {
                     newVelocity = tempResult;
                 }
 
-                distance = Vector2.det(lines.get(i).dir, lines.get(i).point.subtract(newVelocity));
+                distance = Vector2.cross(lines.get(i).dir, lines.get(i).point.subtract(newVelocity));
             }
         }
     }
@@ -242,7 +242,9 @@ public class LinearProgramHelper {
             HalfPlane a = planes.get(i);
             for (int j = i + 1; j < planes.size(); ++j) {
                 HalfPlane b = planes.get(j);
-                corners.add(a.line.intersection(b.line));
+                Vector2 intersection = a.line.intersection(b.line);
+                if (intersection != null)
+                    corners.add(intersection);
             }
         }
         // 去除不能到达的（不在半平面交上面的）

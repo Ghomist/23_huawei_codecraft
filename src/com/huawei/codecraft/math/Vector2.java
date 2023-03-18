@@ -2,6 +2,10 @@ package com.huawei.codecraft.math;
 
 public class Vector2 {
     public static final Vector2 ZERO = new Vector2();
+    public static final Vector2 UP = new Vector2(0, 1);
+    public static final Vector2 DOWN = new Vector2(0, -1);
+    public static final Vector2 LEFT = new Vector2(-1, 0);
+    public static final Vector2 RIGHT = new Vector2(1, 0);
 
     public final double x;
     public final double y;
@@ -45,6 +49,10 @@ public class Vector2 {
         return x * v.x + y * v.y;
     }
 
+    public double cross(Vector2 v) {
+        return x * v.y - y * v.x;
+    }
+
     public double length() {
         return Math.sqrt(x * x + y * y);
     }
@@ -78,7 +86,7 @@ public class Vector2 {
         return getFromRadian(radius).multiply(length);
     }
 
-    public static double det(Vector2 a, Vector2 b) {
+    public static double cross(Vector2 a, Vector2 b) {
         return a.x * b.y - a.y * b.x;
     }
 

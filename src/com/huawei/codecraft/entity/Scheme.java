@@ -6,7 +6,7 @@ import com.huawei.codecraft.math.Vector2;
 
 public class Scheme {
 
-    public static final double AVERAGE_MAX_SPEED = Robot.MAX_FORWARD_SPEED - 0.2;
+    public static final double AVERAGE_MAX_SPEED = Robot.MAX_FORWARD_SPEED - 0.6;
     public static final double CHANGING_SPEED = AVERAGE_MAX_SPEED / 2;
     public static final double CHANGING_SPEED_DIST = 1;
 

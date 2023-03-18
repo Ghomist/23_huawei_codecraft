@@ -38,12 +38,12 @@ public class Main {
         Vector2 pos = new Vector2(0, 0);
         List<HalfPlane> lines = new ArrayList<>();
         lines.add(new HalfPlane(
-                new Line(new Vector2(1, 0), new Vector2(1, -1)),
-                new Vector2(1, 1)));
-        lines.add(new HalfPlane(
-                new Line(new Vector2(1, 0), new Vector2(1, 1)),
-                new Vector2(1, -1)));
-        Vector2 result = LinearProgramHelper.shortestDistance(lines, pos);
+                new Line(new Vector2(0, 1), Vector2.RIGHT),
+                Vector2.DOWN));
+        // lines.add(new HalfPlane(
+        // new Line(new Vector2(1, 0), new Vector2(1, 1)),
+        // new Vector2(1, -1)));
+        Vector2 result = LinearProgramHelper.shortestDistance(lines, Vector2.UP.multiply(2));
         System.out.println(result.length());
     }
 }
