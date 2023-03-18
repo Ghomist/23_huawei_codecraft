@@ -33,6 +33,7 @@ public class Robot {
     public static final double RVO2_TAO = 1.5; // alarm time (50 frames -> 1s)
     public static final double INV_TAO = 1 / RVO2_TAO;
     public static final double RVO2_ADJUST_RATE = 1.5;
+    public static final double RVO2_ADJUST_RATE_WALL = 1.35;
 
     public int id;
 
@@ -138,7 +139,7 @@ public class Robot {
             final double relativeDist = -pos.y * INV_TAO;
             if (getLineSpeed().y < relativeDist) {
                 Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
-                Vector2 point = getLineSpeed().add(1.35, u);
+                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
                 planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.UP));
                 finalU = finalU.add(u);
             }
@@ -147,7 +148,7 @@ public class Robot {
             final double relativeDist = (50 - pos.y) * INV_TAO;
             if (getLineSpeed().y > relativeDist) {
                 Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
-                Vector2 point = getLineSpeed().add(1.35, u);
+                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
                 planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.DOWN));
                 finalU = finalU.add(u);
             }
@@ -156,7 +157,7 @@ public class Robot {
             final double relativeDist = -pos.x * INV_TAO;
             if (getLineSpeed().x < relativeDist) {
                 Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
-                Vector2 point = getLineSpeed().add(1.35, u);
+                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
                 planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.RIGHT));
                 finalU = finalU.add(u);
             }
@@ -165,7 +166,7 @@ public class Robot {
             final double relativeDist = (50 - pos.x) * INV_TAO;
             if (getLineSpeed().x > relativeDist) {
                 Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
-                Vector2 point = getLineSpeed().add(1.35, u);
+                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
                 planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.LEFT));
                 finalU = finalU.add(u);
             }
