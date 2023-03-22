@@ -3,7 +3,7 @@ package com.huawei.codecraft.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.huawei.codecraft.entity.CraftTable;
+import com.huawei.codecraft.entity.Workbench;
 import com.huawei.codecraft.entity.GameMap;
 import com.huawei.codecraft.entity.Robot;
 import com.huawei.codecraft.entity.Scheme;
@@ -19,17 +19,18 @@ public class GameController {
 
     public int frameID;
     public int money;
-    public int craftTableCount;
+    public int workbenchCountCount;
 
     private GameMap map;
     private Robot[] robots = new Robot[4];
-    private List<CraftTable> tables = new ArrayList<>();
+    private List<Workbench> benches = new ArrayList<>();
     private List<Scheme> schemes = new ArrayList<>();
 
     public void init() {
         map = new GameMap();
         String line;
         int x = 0;
+        int robotId = 0;
         while (Input.hasNextLine()) {
             line = Input.nextLine();
             if ("OK".equals(line)) {
@@ -40,24 +41,26 @@ public class GameController {
                 switch (c) {
                     case 'A':
                         // no need for init Robots
-                        // robots.add(new Robot(Vector2.getPosFromGridIndex(x, y)));
+                        robots[robotId] = new Robot(robotId, Vector2.getPosFromGridIndex(x, y));
+                        robotId++;
                         // fallthrough
                     case '.':
                         map.SetGridType(x, y, 0);
                         break;
                     default:
-                        boolean nearByWall = x == 0 || x == 99 || y == 0 || y == 99;
-                        tables.add(
-                                new CraftTable(tables.size(), c - '0', Vector2.getPosFromGridIndex(x, y), nearByWall));
+                        // boolean nearByWall = x == 0 || x == 99 || y == 0 || y == 99;
+                        int id = benches.size();
+                        int type = c - '0';
+                        benches.add(new Workbench(id, type, Vector2.getPosFromGridIndex(x, y)));
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
             }
             x++;
         }
-        for (int i = 0; i < 4; ++i) {
-            robots[i] = new Robot();
-        }
+        // for (int i = 0; i < 4; ++i) {
+        // robots[i] = new Robot();
+        // }
         start();
         running = true;
         Output.ok();
@@ -76,22 +79,23 @@ public class GameController {
     }
 
     public double getRemainTime() {
-        return (TOTAL_FRAMES_COUNT - frameID + 1) * 20 / 1000 ;
+        return (TOTAL_FRAMES_COUNT - frameID + 1) * 20 / 1000;
     }
 
     private void start() {
         // Todo: init schedule
-        for (int i = 0; i < tables.size(); ++i) {
-            CraftTable start = tables.get(i);
-            for (int j = 0; j < tables.size(); ++j) {
+        for (int i = 0; i < benches.size(); ++i) {
+            Workbench start = benches.get(i);
+            for (int j = 0; j < benches.size(); ++j) {
                 if (i == j)
                     continue;
-                CraftTable end = tables.get(j);
+                Workbench end = benches.get(j);
                 if (Scheme.isAvailableScheme(start, end)) {
                     schemes.add(new Scheme(this, start, end));
                 }
             }
         }
+        // schedule(); // schedule advance
     }
 
     private void update() {
@@ -108,14 +112,14 @@ public class GameController {
         frameID = Integer.parseInt(lineSplit[0]);
         money = Integer.parseInt(lineSplit[1]);
 
-        // craft table count
+        // craft bench count
         line = Input.nextLine();
-        craftTableCount = Integer.parseInt(line);
+        workbenchCountCount = Integer.parseInt(line);
 
-        // craft table update
-        for (int i = 0; i < craftTableCount; ++i) {
+        // craft bench update
+        for (int i = 0; i < workbenchCountCount; ++i) {
             line = Input.nextLine();
-            tables.get(i).update(line);
+            benches.get(i).update(line);
         }
 
         // robot update

@@ -7,7 +7,6 @@ import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
-import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
@@ -23,7 +22,7 @@ public class Robot {
     public static final double RADIUS = 0.45;
     public static final double RADIUS_CARRY = 0.53;
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
-    public static final double AT_TABLE_DIST = 0.4;
+    public static final double BENCH_TEST_DIST = 0.4;
 
     /// RVO2 params
     public static final boolean USE_RVO2 = true; // most priority
@@ -37,12 +36,12 @@ public class Robot {
 
     public int id;
 
-    private int tableID;
+    private int atWorkbenchID;
     private int item;
-    private float timeValueArg;
-    private float impactValueArg;
-    private float w;
-    private float dir;
+    private double timeValueArg;
+    private double impactValueArg;
+    private double w;
+    private double dir;
     private Vector2 v;
     private Vector2 pos;
     private Vector2 prefVelocity = Vector2.ZERO;
@@ -59,23 +58,29 @@ public class Robot {
         this.v = Vector2.ZERO;
     }
 
+    public Robot(int id, Vector2 pos) {
+        this.id = id;
+        this.pos = pos;
+        this.v = Vector2.ZERO;
+    }
+
     public void update(int id, String info) {
         this.id = id;
 
         String[] parts = info.split(" ");
 
-        tableID = Integer.parseInt(parts[0]);
+        atWorkbenchID = Integer.parseInt(parts[0]);
         item = parts[1].charAt(0) - '0';
-        timeValueArg = Float.parseFloat(parts[2]);
-        impactValueArg = Float.parseFloat(parts[3]);
-        w = Float.parseFloat(parts[4]);
-        float vx = Float.parseFloat(parts[5]);
-        float vy = Float.parseFloat(parts[6]);
+        timeValueArg = Double.parseDouble(parts[2]);
+        impactValueArg = Double.parseDouble(parts[3]);
+        w = Double.parseDouble(parts[4]);
+        double vx = Double.parseDouble(parts[5]);
+        double vy = Double.parseDouble(parts[6]);
         v = new Vector2(vx, vy);
-        dir = Float.parseFloat(parts[7]);
+        dir = Double.parseDouble(parts[7]);
 
-        float x = Float.parseFloat(parts[8]);
-        float y = Float.parseFloat(parts[9]);
+        double x = Double.parseDouble(parts[8]);
+        double y = Double.parseDouble(parts[9]);
         pos = new Vector2(x, y);
 
         cmdList.clear();
@@ -89,7 +94,7 @@ public class Robot {
         if (targets.size() > 0) {
             RobotTarget target = targets.getFirst();
             Vector2 targetPos = target.pos;
-            judge = target.table.isDangerous();
+            judge = target.bench.isDangerous();
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
             dis = dist;
@@ -97,17 +102,17 @@ public class Robot {
             prefVelocity = Vector2.getFromRadian(targetDir,
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
-            if (isAtTable()) {
-                if (target.table == null) {
-                    // if (distToTarget < AT_TABLE_DIST / 2)
+            if (isAtWorkbench()) {
+                if (target.bench == null) {
+                    // if (dist < BENCH_TEST_DIST / 2)
                     finishTarget();
                 } else {
-                    if (getTableID() == target.table.id) {
+                    if (getAtWorkbenchID() == target.bench.id) {
                         if (hasItem()) {
                             sell();
                             finishTarget();
                             scheme.finish();
-                        } else if (target.table.hasProduction()) {
+                        } else if (target.bench.hasProduction()) {
                             buy();
                             scheme.onSending();
                             finishTarget();
@@ -314,12 +319,12 @@ public class Robot {
         cmdList.add("destroy " + id);
     }
 
-    public boolean isAtTable() {
-        return tableID != -1;
+    public boolean isAtWorkbench() {
+        return atWorkbenchID != -1;
     }
 
-    public int getTableID() {
-        return tableID;
+    public int getAtWorkbenchID() {
+        return atWorkbenchID;
     }
 
     public boolean hasItem() {
@@ -330,11 +335,11 @@ public class Robot {
         return item;
     }
 
-    public float getItemPrice() {
+    public double getItemPrice() {
         return PriceHelper.getSellPrice(item) * timeValueArg * impactValueArg;
     }
 
-    public float getAngleSpeed() {
+    public double getAngleSpeed() {
         return w;
     }
 
@@ -346,7 +351,7 @@ public class Robot {
         return pos;
     }
 
-    public float getDir() {
+    public double getDir() {
         return dir;
     }
 

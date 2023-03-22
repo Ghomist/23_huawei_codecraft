@@ -30,7 +30,7 @@ public class Line {
         }
     }
 
-    public double distanceTo(Vector2 point) { // TODO
+    public double distanceTo(Vector2 point) { // Todo
         Vector2 v1 = point.subtract(this.point);
         Vector2 normal = new Vector2(-this.dir.y, this.dir.x);
         double d = v1.dot(normal) / this.dir.dot(normal);

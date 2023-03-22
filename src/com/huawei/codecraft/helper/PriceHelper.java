@@ -1,6 +1,6 @@
 package com.huawei.codecraft.helper;
 
-import com.huawei.codecraft.entity.CraftTable;
+import com.huawei.codecraft.entity.Workbench;
 
 public class PriceHelper {
     public static int getBuyPrice(int item) {
@@ -45,8 +45,8 @@ public class PriceHelper {
         }
     }
 
-    public static int getLaterProfitByCraft(CraftTable table) {
-        int type = table.getType();
+    public static int getLaterProfitByCraft(Workbench bench) {
+        int type = bench.getType();
         if (type <= 3 || type >= 8)
             return 0;
         int profit = getSellPrice(type) - getBuyPrice(type);

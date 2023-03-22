@@ -10,8 +10,8 @@ public class Scheme {
     public static final double CHANGING_SPEED = AVERAGE_MAX_SPEED / 2;
     public static final double CHANGING_SPEED_DIST = 1;
 
-    public CraftTable start;
-    public CraftTable end;
+    public Workbench start;
+    public Workbench end;
 
     private int itemType;
     private GameController controller;
@@ -21,7 +21,7 @@ public class Scheme {
     private double expectTrafficTime;
     private double expectProfit;
 
-    public Scheme(GameController controller, CraftTable start, CraftTable end) {
+    public Scheme(GameController controller, Workbench start, Workbench end) {
         this.controller = controller;
         this.start = start;
         this.end = end;
@@ -35,7 +35,7 @@ public class Scheme {
         expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);
     }
 
-    public static boolean isAvailableScheme(CraftTable start, CraftTable end) {
+    public static boolean isAvailableScheme(Workbench start, Workbench end) {
         if (start == end || start.id == end.id)
             return false;
         int a = start.getType();

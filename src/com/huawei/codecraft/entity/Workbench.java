@@ -3,7 +3,7 @@ package com.huawei.codecraft.entity;
 import com.huawei.codecraft.math.Vector2;
 import com.huawei.codecraft.util.BitCalculator;
 
-public class CraftTable {
+public class Workbench {
 
     public int id;
 
@@ -12,24 +12,22 @@ public class CraftTable {
     private int remainFrames;
     private boolean hasProduction;
     private int materialStatus;
-    private boolean dangerous = false;
 
     private boolean[] pendingMaterial = new boolean[10];
     private boolean isOrdered = false;
 
-    public CraftTable(int id, int type, Vector2 pos, boolean dangerous) {
+    public Workbench(int id, int type, Vector2 pos) {
         this.pos = pos;
         this.id = id;
         this.type = type;
-        this.dangerous = dangerous;
     }
 
     public void update(String info) {
         String[] infos = info.split(" ");
         type = infos[0].charAt(0) - '0';
 
-        float x = Float.parseFloat(infos[1]);
-        float y = Float.parseFloat(infos[2]);
+        double x = Double.parseDouble(infos[1]);
+        double y = Double.parseDouble(infos[2]);
         pos = new Vector2(x, y);
 
         remainFrames = Integer.parseInt(infos[3]);
@@ -37,7 +35,7 @@ public class CraftTable {
         hasProduction = infos[5].charAt(0) == '1';
     }
 
-    public boolean isDangerous(){
+    public boolean isDangerous() {
         return (pos.x <= 3 || pos.x >= 48 || pos.y <= 3 || pos.y >= 48);
     }
 
