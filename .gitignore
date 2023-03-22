@@ -1,0 +1,13 @@
+.vscode/
+bin/
+debug/
+
+# *.bat
+# *.sh
+*.rep
+*.out
+*.zip
+
+out.txt
+
+# .gitignore
