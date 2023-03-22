@@ -10,10 +10,10 @@ javac -encoding UTF-8 -d bin/ @sources.txt
 del sources.txt
 
 cd debug
-.\Robot.exe -f -m .\maps\1.txt -c ..\bin\ "java com.huawei.codecraft.Main" > 1.out
-.\Robot.exe -f -m .\maps\2.txt -c ..\bin\ "java com.huawei.codecraft.Main" > 2.out
-.\Robot.exe -f -m .\maps\3.txt -c ..\bin\ "java com.huawei.codecraft.Main" > 3.out
-.\Robot.exe -f -m .\maps\4.txt -c ..\bin\ "java com.huawei.codecraft.Main" > 4.out
+.\Robot.exe -f -m .\maps\1.txt -c ..\bin\ "java com.huawei.codecraft.Main restart" > 1.out
+.\Robot.exe -f -m .\maps\2.txt -c ..\bin\ "java com.huawei.codecraft.Main restart" > 2.out
+.\Robot.exe -f -m .\maps\3.txt -c ..\bin\ "java com.huawei.codecraft.Main restart" > 3.out
+.\Robot.exe -f -m .\maps\4.txt -c ..\bin\ "java com.huawei.codecraft.Main restart" > 4.out
 
 type *.out > data.txt
 

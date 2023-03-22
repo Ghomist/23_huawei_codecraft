@@ -15,6 +15,8 @@ public class GameController {
 
     public static final int TOTAL_FRAMES_COUNT = 3 * 60 * 50;
 
+    public static GameController instance = null;
+
     public boolean running;
 
     public int frameID;
@@ -27,6 +29,7 @@ public class GameController {
     private List<Scheme> schemes = new ArrayList<>();
 
     public void init() {
+        instance = this;
         map = new GameMap();
         String line;
         int x = 0;
