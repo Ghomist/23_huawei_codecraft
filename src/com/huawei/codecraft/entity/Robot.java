@@ -87,9 +87,9 @@ public class Robot {
         double dis = -1;
         boolean judge = false;
         if (targets.size() > 0) {
-            RobotTarget targetRobot = targets.getFirst();
-            Vector2 targetPos = targetRobot.pos;
-            judge = targetRobot.table.isDangerous();
+            RobotTarget target = targets.getFirst();
+            Vector2 targetPos = target.pos;
+            judge = target.table.isDangerous();
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
             dis = dist;
@@ -98,16 +98,16 @@ public class Robot {
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
             if (isAtTable()) {
-                if (targetRobot.table == null) {
+                if (target.table == null) {
                     // if (distToTarget < AT_TABLE_DIST / 2)
                     finishTarget();
                 } else {
-                    if (getTableID() == targetRobot.table.id) {
+                    if (getTableID() == target.table.id) {
                         if (hasItem()) {
                             sell();
                             finishTarget();
                             scheme.finish();
-                        } else if (targetRobot.table.hasProduction()) {
+                        } else if (target.table.hasProduction()) {
                             buy();
                             scheme.onSending();
                             finishTarget();
