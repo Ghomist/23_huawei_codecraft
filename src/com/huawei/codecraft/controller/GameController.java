@@ -75,8 +75,8 @@ public class GameController {
         }
     }
 
-    public int getRemainTime() {
-        return (TOTAL_FRAMES_COUNT - frameID + 1) * 20 / 1000;
+    public double getRemainTime() {
+        return (TOTAL_FRAMES_COUNT - frameID + 1) * 20 / 1000 ;
     }
 
     private void start() {

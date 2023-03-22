@@ -37,6 +37,10 @@ public class CraftTable {
         hasProduction = infos[5].charAt(0) == '1';
     }
 
+    public boolean isDangerous(){
+        return (pos.x <= 3 || pos.x >= 48 || pos.y <= 3 || pos.y >= 48);
+    }
+
     public int getType() {
         return type;
     }

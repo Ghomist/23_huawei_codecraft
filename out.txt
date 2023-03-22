@@ -1,0 +1,267 @@
+
+------------------ 
+The sum is 2927765 
+{"status":"Successful","score":871813}
+{"status":"Successful","score":678496}
+{"status":"Successful","score":645427}
+{"status":"Successful","score":732029}
+------------------ 
+The sum is 3048256 
+{"status":"Successful","score":904263}
+{"status":"Successful","score":737189}
+{"status":"Successful","score":660385}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 2904304 
+{"status":"Successful","score":920087}
+{"status":"Successful","score":620220}
+{"status":"Successful","score":640617}
+{"status":"Successful","score":723380}
+------------------ 
+The sum is 3061156 
+{"status":"Successful","score":904263}
+{"status":"Successful","score":737189}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3061156 
+{"status":"Successful","score":904263}
+{"status":"Successful","score":737189}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 2985539 
+{"status":"Successful","score":869572}
+{"status":"Successful","score":717591}
+{"status":"Successful","score":645056}
+{"status":"Successful","score":753320}
+------------------ 
+The sum is 2907003 
+{"status":"Successful","score":797104}
+{"status":"Successful","score":731236}
+{"status":"Successful","score":637341}
+{"status":"Successful","score":741322}
+------------------ 
+The sum is 3065977 
+{"status":"Successful","score":946606}
+{"status":"Successful","score":736088}
+{"status":"Successful","score":631703}
+{"status":"Successful","score":751580}
+------------------ 
+The sum is 3064673 
+{"status":"Successful","score":904263}
+{"status":"Successful","score":740706}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3064647 
+{"status":"Successful","score":904263}
+{"status":"Successful","score":740680}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3067240 
+{"status":"Successful","score":906830}
+{"status":"Successful","score":740706}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3063924 
+{"status":"Successful","score":906830}
+{"status":"Successful","score":737407}
+{"status":"Successful","score":673268}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3067214 
+{"status":"Successful","score":906830}
+{"status":"Successful","score":740680}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3061156 
+{"status":"Successful","score":904263}
+{"status":"Successful","score":737189}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3067240 
+{"status":"Successful","score":906830}
+{"status":"Successful","score":740706}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3063116 
+{"status":"Successful","score":906830}
+{"status":"Successful","score":736582}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3067240 
+{"status":"Successful","score":906830}
+{"status":"Successful","score":740706}
+{"status":"Successful","score":673285}
+{"status":"Successful","score":746419}
+------------------ 
+The sum is 3015696 
+{"status":"Successful","score":892113}
+{"status":"Successful","score":737000}
+{"status":"Successful","score":643190}
+{"status":"Successful","score":743393}
+------------------ 
+The sum is 3006520 
+{"status":"Successful","score":885620}
+{"status":"Successful","score":733626}
+{"status":"Successful","score":644594}
+{"status":"Successful","score":742680}
+------------------ 
+The sum is 2844179 
+{"status":"Successful","score":864078}
+{"status":"Successful","score":694151}
+{"status":"Successful","score":612377}
+{"status":"Successful","score":673573}
+------------------ 
+The sum is 2907196 
+{"status":"Successful","score":865787}
+{"status":"Successful","score":689076}
+{"status":"Successful","score":634904}
+{"status":"Successful","score":717429}
+------------------ 
+The sum is 2931473 
+{"status":"Successful","score":900691}
+{"status":"Successful","score":681222}
+{"status":"Successful","score":649180}
+{"status":"Successful","score":700380}
+------------------ 
+The sum is 2931473 
+{"status":"Successful","score":900691}
+{"status":"Successful","score":681222}
+{"status":"Successful","score":649180}
+{"status":"Successful","score":700380}
+------------------ 
+The sum is 2961706 
+{"status":"Successful","score":908253}
+{"status":"Successful","score":721551}
+{"status":"Successful","score":632249}
+{"status":"Successful","score":699653}
+------------------ 
+The sum is 2915951 
+{"status":"Successful","score":865670}
+{"status":"Successful","score":712230}
+{"status":"Successful","score":611973}
+{"status":"Successful","score":726078}
+------------------ 
+The sum is 2917627 
+{"status":"Successful","score":815901}
+{"status":"Successful","score":725693}
+{"status":"Successful","score":647944}
+{"status":"Successful","score":728089}
+------------------ 
+The sum is 2983505 
+{"status":"Successful","score":884680}
+{"status":"Successful","score":739705}
+{"status":"Successful","score":616321}
+{"status":"Successful","score":742799}
+------------------ 
+The sum is 3018212 
+{"status":"Successful","score":898129}
+{"status":"Successful","score":719697}
+{"status":"Successful","score":668977}
+{"status":"Successful","score":731409}
+------------------ 
+The sum is 3046003 
+{"status":"Successful","score":916322}
+{"status":"Successful","score":722044}
+{"status":"Successful","score":651580}
+{"status":"Successful","score":756057}
+------------------ 
+------------------ 
+The sum is 2957603 
+{"status":"Successful","score":907717}
+{"status":"Successful","score":692731}
+{"status":"Successful","score":640723}
+{"status":"Successful","score":716432}
+------------------ 
+The sum is 3007088 
+{"status":"Successful","score":837137}
+{"status":"Successful","score":721901}
+{"status":"Successful","score":691993}
+{"status":"Successful","score":756057}
+------------------ 
+------------------ 
+The sum is 2972491 
+{"status":"Successful","score":921166}
+{"status":"Successful","score":737872}
+{"status":"Successful","score":613221}
+{"status":"Successful","score":700232}
+------------------ 
+The sum is 2982966 
+{"status":"Successful","score":921085}
+{"status":"Successful","score":732917}
+{"status":"Successful","score":628732}
+{"status":"Successful","score":700232}
+------------------ 
+The sum is 3004549 
+{"status":"Successful","score":918389}
+{"status":"Successful","score":740967}
+{"status":"Successful","score":624550}
+{"status":"Successful","score":720643}
+------------------ 
+The sum is 3034485 
+{"status":"Successful","score":905705}
+{"status":"Successful","score":734124}
+{"status":"Successful","score":664701}
+{"status":"Successful","score":729955}
+------------------ 
+The sum is 3004405 
+{"status":"Successful","score":950456}
+{"status":"Successful","score":717266}
+{"status":"Successful","score":655347}
+{"status":"Successful","score":681336}
+------------------ 
+The sum is 2971147 
+{"status":"Successful","score":911768}
+{"status":"Successful","score":673481}
+{"status":"Successful","score":649343}
+{"status":"Successful","score":736555}
+------------------ 
+The sum is 2940918 
+{"status":"Successful","score":875055}
+{"status":"Successful","score":678634}
+{"status":"Successful","score":653974}
+{"status":"Successful","score":733255}
+------------------ 
+The sum is 2994921 
+{"status":"Successful","score":911423}
+{"status":"Successful","score":722405}
+{"status":"Successful","score":632261}
+{"status":"Successful","score":728832}
+------------------ 
+The sum is 3004405 
+{"status":"Successful","score":950456}
+{"status":"Successful","score":717266}
+{"status":"Successful","score":655347}
+{"status":"Successful","score":681336}
+------------------ 
+The sum is 2958720 
+{"status":"Successful","score":884708}
+{"status":"Successful","score":703269}
+{"status":"Successful","score":658082}
+{"status":"Successful","score":712661}
+------------------ 
+The sum is 2902742 
+{"status":"Successful","score":832614}
+{"status":"Successful","score":722330}
+{"status":"Successful","score":635299}
+{"status":"Successful","score":712499}
+------------------ 
+The sum is 3006763 
+{"status":"Successful","score":904827}
+{"status":"Successful","score":717266}
+{"status":"Successful","score":655347}
+{"status":"Successful","score":729323}
+------------------ 
+The sum is 2989438 
+{"status":"Successful","score":950456}
+{"status":"Successful","score":717266}
+{"status":"Successful","score":640380}
+{"status":"Successful","score":681336}

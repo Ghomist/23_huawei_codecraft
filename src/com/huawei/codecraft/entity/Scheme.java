@@ -29,7 +29,7 @@ public class Scheme {
         int sellPrice = PriceHelper.getSellPrice(start.getType());
         int buyPrice = PriceHelper.getBuyPrice(start.getType());
         double distance = Vector2.distance(start.getPos(), end.getPos());
-        expectTrafficTime = (distance - 2 * CHANGING_SPEED_DIST) / AVERAGE_MAX_SPEED
+        expectTrafficTime = (distance - 3 * CHANGING_SPEED_DIST) / AVERAGE_MAX_SPEED
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         double timeValueArg = PriceHelper.getTimeValueArg(expectTrafficTime);
         expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);

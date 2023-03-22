@@ -32,7 +32,7 @@ public class Robot {
     public static final double RVO2_AVOID_DIST_WALL = RVO2_AVOID_DIST;
     public static final double RVO2_TAO = 1.5; // alarm time (50 frames -> 1s)
     public static final double INV_TAO = 1 / RVO2_TAO;
-    public static final double RVO2_ADJUST_RATE = 1.5;
+    public static final double RVO2_ADJUST_RATE = 1.58;
     public static final double RVO2_ADJUST_RATE_WALL = 1.35;
 
     public int id;
@@ -84,13 +84,16 @@ public class Robot {
     public void schedule(Robot[] robots) {
         // if (id != 0)
         // return;
+        double dis = -1;
+        boolean judge = false;
         if (targets.size() > 0) {
             RobotTarget targetRobot = targets.getFirst();
             Vector2 targetPos = targetRobot.pos;
-
+            judge = targetRobot.table.isDangerous();
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
-            double prefSpeed = MathHelper.clamp(MAX_BACKWARD_SPEED, MAX_FORWARD_SPEED, dist * dist);
+            dis = dist;
+            double prefSpeed = MathHelper.clamp(MAX_BACKWARD_SPEED, MAX_FORWARD_SPEED, 1.2 * dist);
             prefVelocity = Vector2.getFromRadian(targetDir,
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
@@ -123,7 +126,10 @@ public class Robot {
 
         // set speed to pref velocity
         double speedK = Math.cos(Math.abs(diff));
-        setForwardSpeed(speedK * MAX_FORWARD_SPEED);
+        if (dis < 0.8 && dis > 0.1 && judge)
+            setForwardSpeed(speedK * MAX_FORWARD_SPEED * dis);
+        else
+            setForwardSpeed(speedK * MAX_FORWARD_SPEED);
 
         // set rotate to pref velocity
         setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
