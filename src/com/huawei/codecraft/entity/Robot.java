@@ -28,11 +28,12 @@ public class Robot {
     public static final boolean USE_RVO2 = true; // most priority
     public static final boolean USE_RVO = false;
     public static final double RVO2_AVOID_DIST = 5; // min is 5.3 * 2 = 1.06
-    public static final double RVO2_AVOID_DIST_WALL = RVO2_AVOID_DIST;
+    public static final double RVO2_AVOID_DIST_WALL = RVO2_AVOID_DIST - 2;
     public static final double RVO2_TAO = 1.5; // alarm time (50 frames -> 1s)
     public static final double INV_TAO = 1 / RVO2_TAO;
-    public static final double RVO2_ADJUST_RATE = 1.58;
-    public static final double RVO2_ADJUST_RATE_WALL = 1.35;
+    public static final double RVO2_ADJUST_RATE_HIGH = 1.6;
+    public static final double RVO2_ADJUST_RATE_LOW = 1.3;
+    public static final double RVO2_ADJUST_RATE_WALL = 1.45;
 
     public int id;
 
@@ -259,11 +260,11 @@ public class Robot {
                 u = unitW.multiply(rr * invTimeStep - wLength);
             }
 
-            final Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE, u);
+            final Vector2 point = getLineSpeed().add(getAdjustRate(), u);
             // lines.add(new HalfPlane(new Line(point, direction), u));
             planes.add(new HalfPlane(new Line(point, direction), u));
 
-            finalU = finalU.add(RVO2_ADJUST_RATE, u);
+            finalU = finalU.add(getAdjustRate(), u);
         }
 
         if (USE_RVO2) {
@@ -377,5 +378,9 @@ public class Robot {
         } else {
             return true;
         }
+    }
+
+    private double getAdjustRate() {
+        return hasItem() ? RVO2_ADJUST_RATE_LOW : RVO2_ADJUST_RATE_HIGH;
     }
 }
