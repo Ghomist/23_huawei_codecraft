@@ -22,7 +22,7 @@ public class LineSegment {
         return b;
     }
 
-    public double getLength() {
+    public double length() {
         return Vector2.distance(p2, p1);
     }
 
@@ -60,13 +60,13 @@ public class LineSegment {
     public static LineSegment shortestPath(LineSegment a, LineSegment b) {
         LineSegment ret = shortestPath(a.p1, b);
         LineSegment d2 = shortestPath(a.p2, b);
-        if (d2.getLength() < ret.getLength())
+        if (d2.length() < ret.length())
             ret = d2;
         LineSegment d3 = shortestPath(b.p1, a);
-        if (d3.getLength() < ret.getLength())
+        if (d3.length() < ret.length())
             ret = d3;
         LineSegment d4 = shortestPath(b.p2, a);
-        if (d4.getLength() < ret.getLength())
+        if (d4.length() < ret.length())
             ret = d4;
         return ret;
     }
@@ -101,7 +101,7 @@ public class LineSegment {
             return new Vector2(x, y);
         else {
             LineSegment shortestPath = shortestPath(a, b);
-            if (shortestPath.getLength() <= maxDistance) {
+            if (shortestPath.length() <= maxDistance) {
                 return shortestPath.getMidPoint();
             } else {
                 return null;

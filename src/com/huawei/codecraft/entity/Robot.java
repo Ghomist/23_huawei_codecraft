@@ -2,11 +2,15 @@ package com.huawei.codecraft.entity;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
+import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
+import com.huawei.codecraft.helper.SchemeHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
@@ -37,6 +41,8 @@ public class Robot {
 
     public int id;
 
+    private GameController game;
+
     private int atWorkbenchID;
     private int item;
     private double timeValueArg;
@@ -47,7 +53,7 @@ public class Robot {
     private Vector2 pos;
     private Vector2 prefVelocity = Vector2.ZERO;
 
-    private Scheme scheme;
+    private Request request;
 
     private LinkedList<RobotTarget> targets = new LinkedList<>();
 
@@ -57,12 +63,14 @@ public class Robot {
     public Robot() {
         this.pos = Vector2.ZERO;
         this.v = Vector2.ZERO;
+        game = GameController.instance;
     }
 
     public Robot(int id, Vector2 pos) {
         this.id = id;
         this.pos = pos;
         this.v = Vector2.ZERO;
+        game = GameController.instance;
     }
 
     public void update(int id, String info) {
@@ -111,11 +119,12 @@ public class Robot {
                     if (getAtWorkbenchID() == target.bench.id) {
                         if (hasItem()) {
                             sell();
+                            request.finishedBy(this);
                             finishTarget();
-                            scheme.finish();
                         } else if (target.bench.hasProduction()) {
                             buy();
-                            scheme.onSending();
+                            target.bench.setOrder(false);
+                            request.sendingBy(this);
                             finishTarget();
                         }
                     }
@@ -123,6 +132,51 @@ public class Robot {
             }
         } else {
             prefVelocity = Vector2.ZERO;
+
+            Request[] list = game.requests.stream()
+                    .filter(x -> x.isWaiting() || x.isPending())
+                    .sorted((a, b) -> Integer.compare(b.getPriority(), a.getPriority()))
+                    .toArray(Request[]::new);
+
+            for (Request request : list) {
+                int type = request.getType();
+                Workbench[] benches = game.benches.stream()
+                        .filter(x -> x.getType() == type && SchemeHelper.isAvailable(x, this))
+                        // .sorted((a, b) -> Double.compare(Vector2.distance(a.getPos(), pos),
+                        // Vector2.distance(b.getPos(), pos)))
+                        .sorted((a, b) -> Double.compare(SchemeHelper.getAverageProfit(b, request.publisher, this),
+                                SchemeHelper.getAverageProfit(a, request.publisher, this)))
+                        .toArray(Workbench[]::new);
+
+                if (benches.length > 0) {
+                    if (request.isWaiting()) {
+                        // choose request to response
+                        request.pendingBy(this);
+                        Workbench targetBench = benches[0];
+                        targetBench.setOrder(true);
+                        addTarget(targetBench);
+                        addTarget(request.publisher);
+                        this.request = request;
+                    } else if (request.isPending()) {
+                        double cost = request.getCurrentPendingCost();
+                        for (Workbench targetBench : benches) {
+                            // test available
+                            if (Vector2.distance(pos, targetBench.getPos()) < cost) {
+                                // choose request to response
+                                request.pendingBy(this);
+                                targetBench.setOrder(true);
+                                addTarget(targetBench);
+                                addTarget(request.publisher);
+                                this.request = request;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (targets.size() > 0)
+                    break;
+            }
+
         }
         // RVO2
         avoidImpact(robots);
@@ -281,19 +335,23 @@ public class Robot {
         targets.removeFirst();
     }
 
-    public void setScheme(Scheme scheme) {
-        this.scheme = scheme;
-        targets.addLast(new RobotTarget(scheme.start));
-        targets.addLast(new RobotTarget(scheme.end));
-        scheme.setPending();
+    public void addTarget(Workbench bench) {
+        targets.add(new RobotTarget(bench));
+    }
+
+    public Vector2 getTargetPos() {
+        return targets.getFirst().pos;
+    }
+
+    public void interruptRequest() {
+        Output.debug(targets.size());
+        targets.getFirst().bench.setOrder(false);
+        request = null;
+        targets.clear();
     }
 
     public LineSegment getCurrentPath() {
         return new LineSegment(pos, targets.getFirst().pos);
-    }
-
-    public void setPrefForwardSpeed(double speed) {
-
     }
 
     public void setPrefRotateSpeed(double speed) {

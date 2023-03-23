@@ -1,5 +1,6 @@
 package com.huawei.codecraft.entity;
 
+import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.math.Vector2;
 import com.huawei.codecraft.util.BitCalculator;
 
@@ -11,6 +12,7 @@ public class Workbench {
     private Vector2 pos;
     private int remainFrames;
     private boolean hasProduction;
+    private boolean onProducing;
     private int materialStatus;
 
     private boolean[] pendingMaterial = new boolean[10];
@@ -30,9 +32,52 @@ public class Workbench {
         double y = Double.parseDouble(infos[2]);
         pos = new Vector2(x, y);
 
-        remainFrames = Integer.parseInt(infos[3]);
+        int remainFrames = Integer.parseInt(infos[3]);
+        onProducing = this.remainFrames <= 0 && remainFrames > 0;
+        if (onProducing) {
+            onProducing();
+        }
+        this.remainFrames = remainFrames;
         materialStatus = Integer.parseInt(infos[4]);
         hasProduction = infos[5].charAt(0) == '1';
+    }
+
+    private void onProducing() {
+        publishRequest();
+    }
+
+    public void publishRequest() {
+        switch (type) {
+            case 4:
+                GameController.instance.publishRequest(new Request(this, 1));
+                GameController.instance.publishRequest(new Request(this, 2));
+                break;
+            case 5:
+                GameController.instance.publishRequest(new Request(this, 1));
+                GameController.instance.publishRequest(new Request(this, 3));
+                break;
+            case 6:
+                GameController.instance.publishRequest(new Request(this, 2));
+                GameController.instance.publishRequest(new Request(this, 3));
+                break;
+            case 7:
+                GameController.instance.publishRequest(new Request(this, 4));
+                GameController.instance.publishRequest(new Request(this, 5));
+                GameController.instance.publishRequest(new Request(this, 6));
+                break;
+            case 8:
+                GameController.instance.publishRequest(new Request(this, 7));
+                break;
+            case 9:
+                GameController.instance.publishRequest(new Request(this, 1));
+                GameController.instance.publishRequest(new Request(this, 2));
+                GameController.instance.publishRequest(new Request(this, 3));
+                GameController.instance.publishRequest(new Request(this, 4));
+                GameController.instance.publishRequest(new Request(this, 5));
+                GameController.instance.publishRequest(new Request(this, 6));
+                GameController.instance.publishRequest(new Request(this, 7));
+                break;
+        }
     }
 
     public boolean isDangerous() {
