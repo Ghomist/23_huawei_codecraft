@@ -50,7 +50,7 @@ public class PriceHelper {
         if (type <= 3 || type >= 8)
             return 0;
         int profit = getSellPrice(type) - getBuyPrice(type);
-        return profit / (type == 7 ? 60 : 20);
+        return profit / (type == 7 ? 50 : 20);
         // return 0;
     }
 

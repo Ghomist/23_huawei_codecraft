@@ -33,7 +33,7 @@ public class Robot {
     public static final double INV_TAO = 1 / RVO2_TAO;
     public static final double RVO2_ADJUST_RATE_HIGH = 1.6;
     public static final double RVO2_ADJUST_RATE_LOW = 1.3;
-    public static final double RVO2_ADJUST_RATE_WALL = 1.45;
+    public static final double RVO2_ADJUST_RATE_WALL = 1.5;
 
     public int id;
 
@@ -99,7 +99,7 @@ public class Robot {
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
             dis = dist;
-            double prefSpeed = MathHelper.clamp(MAX_BACKWARD_SPEED, MAX_FORWARD_SPEED, 1.2 * dist);
+            double prefSpeed = MathHelper.clamp(MAX_BACKWARD_SPEED, MAX_FORWARD_SPEED, dist * dist);
             prefVelocity = Vector2.getFromRadian(targetDir,
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
