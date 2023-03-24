@@ -21,6 +21,8 @@ public class Scheme {
     private double expectTrafficTime;
     private double expectProfit;
 
+    private boolean notRecommend;
+
     public Scheme(GameController controller, Workbench start, Workbench end) {
         this.controller = controller;
         this.start = start;
@@ -33,6 +35,7 @@ public class Scheme {
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         double timeValueArg = PriceHelper.getTimeValueArg(expectTrafficTime);
         expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);
+        notRecommend = start.getType() != 7 && end.getType() == 9;
     }
 
     public static boolean isAvailableScheme(Workbench start, Workbench end) {
@@ -76,9 +79,9 @@ public class Scheme {
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         // double timeNoWait = distance / AVERAGE_MAX_SPEED;
         double timeWait = start.getRemainFrames() / 50;
-        double expectWaitTime = Math.max(timeNoWait, timeWait * 200);
+        double expectWaitTime = Math.max(timeNoWait, timeWait);
         double expectTime = expectWaitTime + expectTrafficTime;
-        return expectProfit / expectTime + 8000 * end.missingMaterialWeight();
+        return expectProfit / expectTime + 2000 * end.missingMaterialWeight() - (notRecommend ? 300 : 0);
     }
 
     public int getType() {
@@ -97,6 +100,12 @@ public class Scheme {
 
     public void finish() {
         isPending = false;
+        end.finishPendingMaterial(itemType);
+    }
+
+    public void cancelPending() {
+        isPending = false;
+        start.setOrder(false);
         end.finishPendingMaterial(itemType);
     }
 

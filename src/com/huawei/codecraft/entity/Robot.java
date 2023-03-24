@@ -113,6 +113,7 @@ public class Robot {
                             sell();
                             finishTarget();
                             scheme.finish();
+                            scheme = null;
                         } else if (target.bench.hasProduction()) {
                             buy();
                             scheme.onSending();
@@ -282,10 +283,16 @@ public class Robot {
     }
 
     public void setScheme(Scheme scheme) {
-        this.scheme = scheme;
-        targets.addLast(new RobotTarget(scheme.start));
-        targets.addLast(new RobotTarget(scheme.end));
-        scheme.setPending();
+        if (this.scheme != scheme) {
+            if (this.scheme != null) {
+                this.scheme.cancelPending();
+            }
+            this.scheme = scheme;
+            targets.clear();
+            targets.addLast(new RobotTarget(scheme.start));
+            targets.addLast(new RobotTarget(scheme.end));
+            scheme.setPending();
+        }
     }
 
     public LineSegment getCurrentPath() {
