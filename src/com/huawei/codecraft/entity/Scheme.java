@@ -2,6 +2,7 @@ package com.huawei.codecraft.entity;
 
 import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.helper.PriceHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
 
 public class Scheme {
@@ -35,7 +36,11 @@ public class Scheme {
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         double timeValueArg = PriceHelper.getTimeValueArg(expectTrafficTime);
         expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);
-        notRecommend = start.getType() != 7 && end.getType() == 9;
+        if (controller.hasSeven) {
+            notRecommend = start.getType() != 7 && end.getType() == 9;
+        } else {
+            notRecommend = start.getType() <= 3 && end.getType() == 9;
+        }
     }
 
     public static boolean isAvailableScheme(Workbench start, Workbench end) {
@@ -81,7 +86,10 @@ public class Scheme {
         double timeWait = start.getRemainFrames() / 50;
         double expectWaitTime = Math.max(timeNoWait, timeWait);
         double expectTime = expectWaitTime + expectTrafficTime;
-        return expectProfit / expectTime + 2000 * end.missingMaterialWeight() - (notRecommend ? 300 : 0);
+        return expectProfit / (expectTime)
+                + 750 * end.missingMaterialWeight()
+                - (notRecommend ? 300 : 0);
+        // + (!controller.hasSeven && end.getType() == 9 ? 3000 : 0)
     }
 
     public int getType() {
