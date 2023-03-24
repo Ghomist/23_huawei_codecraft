@@ -68,6 +68,8 @@ public class Workbench {
     }
 
     public boolean hasMaterial(int item) {
+        if (type >= 8)
+            return false;
         return BitCalculator.isOne(materialStatus, item) || pendingMaterial[item];
     }
 
@@ -109,6 +111,8 @@ public class Workbench {
                     return 1;
                 else
                     return 0;
+            case 8:
+                return 2;
             default:
                 return 0;
         }

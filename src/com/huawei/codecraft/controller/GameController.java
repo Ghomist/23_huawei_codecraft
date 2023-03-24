@@ -22,6 +22,7 @@ public class GameController {
     public int frameID;
     public int money;
     public int workbenchCountCount;
+    public boolean hasSeven = false;
 
     private GameMap map;
     private Robot[] robots = new Robot[4];
@@ -55,6 +56,8 @@ public class GameController {
                         int id = benches.size();
                         int type = c - '0';
                         benches.add(new Workbench(id, type, Vector2.getPosFromGridIndex(x, y)));
+                        if (type == 7)
+                            hasSeven = true;
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
