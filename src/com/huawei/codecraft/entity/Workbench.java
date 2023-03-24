@@ -90,4 +90,27 @@ public class Workbench {
     public void finishPendingMaterial(int material) {
         pendingMaterial[material] = false;
     }
+
+    public int missingMaterialWeight() {
+        switch (type) {
+            case 4:
+                return (hasMaterial(1) ^ hasMaterial(2)) ? 1 : 0;
+            case 5:
+                return (hasMaterial(1) ^ hasMaterial(3)) ? 1 : 0;
+            case 6:
+                return (hasMaterial(2) ^ hasMaterial(3)) ? 1 : 0;
+            case 7:
+                boolean a = hasMaterial(4);
+                boolean b = hasMaterial(5);
+                boolean c = hasMaterial(6);
+                if (a && b && !c || a && !b && c || !a && b && c)
+                    return 2;
+                else if (a && !b && !c || !a && !b && c || !a && b && !c)
+                    return 1;
+                else
+                    return 0;
+            default:
+                return 0;
+        }
+    }
 }

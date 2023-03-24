@@ -76,9 +76,9 @@ public class Scheme {
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         // double timeNoWait = distance / AVERAGE_MAX_SPEED;
         double timeWait = start.getRemainFrames() / 50;
-        double expectWaitTime = Math.max(timeNoWait, timeWait * 13);
+        double expectWaitTime = Math.max(timeNoWait, timeWait * 200);
         double expectTime = expectWaitTime + expectTrafficTime;
-        return expectProfit / expectTime;
+        return expectProfit / expectTime + 8000 * end.missingMaterialWeight();
     }
 
     public int getType() {
@@ -104,7 +104,7 @@ public class Scheme {
         return controller.getRemainTime() >= expectTrafficTime
                 + Vector2.distance(robot.getPos(), start.getPos()) / AVERAGE_MAX_SPEED
                 && !isPending
-                && start.isProducingOrFinish()
+                && start.hasProduction()
                 && !end.hasMaterial(itemType) && !start.isOrdered();
     }
 }
