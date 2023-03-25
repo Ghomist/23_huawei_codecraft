@@ -22,7 +22,7 @@ public class GameController {
     public int frameID;
     public int money;
     public int workbenchCountCount;
-    public boolean hasSeven = false;
+    public int hasSeven = 0;
 
     private GameMap map;
     private Robot[] robots = new Robot[4];
@@ -57,7 +57,7 @@ public class GameController {
                         int type = c - '0';
                         benches.add(new Workbench(id, type, Vector2.getPosFromGridIndex(x, y)));
                         if (type == 7)
-                            hasSeven = true;
+                            hasSeven++;
                         map.SetGridType(x, y, c - '0');
                         break;
                 }
@@ -137,7 +137,63 @@ public class GameController {
         Input.readUntilOK();
     }
 
+    private void updateTable7(){
+        int p_4=0,p_5=0,p_6=0;
+        for (Workbench w : benches){
+            if (w.getType() == 7)
+            {   
+                if (w.hasMaterial(4))
+                {
+                    if (w.hasMaterial(5))
+                    {
+                        if (!w.hasMaterial(6))
+                            p_6 += 2/hasSeven;
+                    }
+                    else
+                    {
+                        if (w.hasMaterial(6))
+                            p_5 += 2/hasSeven;
+                        else
+                            {
+                                p_5 += 2/hasSeven;
+                                p_6 += 2/hasSeven;
+                            }
+                    }
+                }
+                else
+                {
+                    if (w.hasMaterial(5))
+                    {
+                        if (!w.hasMaterial(6))
+                        {
+                            p_4 += 2./hasSeven;
+                            p_6 += 2/hasSeven;
+                        }
+                        else
+                        {
+                            p_4 += 2/hasSeven;
+                        }
+                    }
+                    else
+                    {
+                        if (w.hasMaterial(6))
+                        {   
+                            p_5 += 2/hasSeven;
+                            p_4 += 2/hasSeven;
+                        }
+                    }
+                }
+            }
+        }
+        for (Scheme s : schemes){
+            s.priority_4 = p_4;
+            s.priority_5 = p_5;
+            s.priority_6 = p_6;
+        } 
+    }
+
     private void schedule() {
+        updateTable7();
         for (Robot robot : robots) {
             if (robot.isFree()) {
                 schemes.sort((sa, sb) -> {

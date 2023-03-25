@@ -134,7 +134,7 @@ public class Robot {
         // set speed to pref velocity
         double speedK = Math.cos(Math.abs(diff));
         if (dis < 0.8 && dis > 0.1 && judge)
-            setForwardSpeed(speedK * MAX_FORWARD_SPEED * (dis + 0.12));
+            setForwardSpeed(speedK * MAX_FORWARD_SPEED * (dis + 0.1));
         else
             setForwardSpeed(speedK * MAX_FORWARD_SPEED);
 

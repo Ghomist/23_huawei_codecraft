@@ -13,6 +13,9 @@ public class Scheme {
 
     public Workbench start;
     public Workbench end;
+    public int priority_4 = 0;
+    public int priority_5 = 0;
+    public int priority_6 = 0;
 
     private int itemType;
     private GameController controller;
@@ -36,7 +39,7 @@ public class Scheme {
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         double timeValueArg = PriceHelper.getTimeValueArg(expectTrafficTime);
         expectProfit = (sellPrice * timeValueArg) - buyPrice + PriceHelper.getLaterProfitByCraft(end);
-        if (controller.hasSeven) {
+        if (controller.hasSeven > 0) {
             notRecommend = start.getType() != 7 && end.getType() == 9;
         } else {
             notRecommend = start.getType() <= 3 && end.getType() == 9;
@@ -80,20 +83,42 @@ public class Scheme {
 
     public double getAverageProfit(Robot robot) {
         double distance = Vector2.distance(robot.getPos(), start.getPos());
-        double timeNoWait = (distance - 2 * CHANGING_SPEED_DIST) / AVERAGE_MAX_SPEED
+        double timeNoWait = (distance - 2.2 * CHANGING_SPEED_DIST) / AVERAGE_MAX_SPEED
                 + 2 * CHANGING_SPEED_DIST / CHANGING_SPEED;
         // double timeNoWait = distance / AVERAGE_MAX_SPEED;
         double timeWait = start.getRemainFrames() / 50;
         double expectWaitTime = Math.max(timeNoWait, timeWait);
         double expectTime = expectWaitTime + expectTrafficTime;
-        return expectProfit / (expectTime)
-                + 750 * end.missingMaterialWeight()
-                - (notRecommend ? 300 : 0);
+        if (end.getType() == 4)
+            return expectProfit / (expectTime) * (1 + priority_4)
+                    + 750 * end.missingMaterialWeight()
+                    - (notRecommend ? 300 : 0);
+        else if (end.getType() == 5)
+            return expectProfit / (expectTime) * (1 + priority_5)
+                    + 750 * end.missingMaterialWeight()
+                    - (notRecommend ? 300 : 0);
+        else if (end.getType() == 6)
+            return expectProfit / (expectTime) * (1 + priority_6)
+                    + 750 * end.missingMaterialWeight()
+                    - (notRecommend ? 300 : 0);
+        else
+            return expectProfit / (expectTime)
+                    + 750 * end.missingMaterialWeight()
+                    - (notRecommend ? 300 : 0);
         // + (!controller.hasSeven && end.getType() == 9 ? 3000 : 0)
     }
 
     public int getType() {
         return itemType;
+    }
+
+    public void increasePriority(int type) {
+        if (type == 4)
+            priority_4 += 0.25;
+        else if (type == 5)
+            priority_5 += 0.25;
+        else if (type == 6)
+            priority_6 += 0.25;
     }
 
     public void setPending() {
