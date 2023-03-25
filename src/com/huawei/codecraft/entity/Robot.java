@@ -1,5 +1,6 @@
 package com.huawei.codecraft.entity;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,6 +8,7 @@ import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
@@ -46,8 +48,6 @@ public class Robot {
     private Vector2 v;
     private Vector2 pos;
     private Vector2 prefVelocity = Vector2.ZERO;
-
-    private Scheme scheme;
 
     private LinkedList<RobotTarget> targets = new LinkedList<>();
 
@@ -112,11 +112,8 @@ public class Robot {
                         if (hasItem()) {
                             sell();
                             finishTarget();
-                            scheme.finish();
-                            scheme = null;
                         } else if (target.bench.hasProduction()) {
                             buy();
-                            scheme.onSending();
                             finishTarget();
                         }
                     }
@@ -282,17 +279,13 @@ public class Robot {
         targets.removeFirst();
     }
 
-    public void setScheme(Scheme scheme) {
-        if (this.scheme != scheme) {
-            if (this.scheme != null) {
-                this.scheme.cancelPending();
-            }
-            this.scheme = scheme;
-            targets.clear();
-            targets.addLast(new RobotTarget(scheme.start));
-            targets.addLast(new RobotTarget(scheme.end));
-            scheme.setPending();
+    public void addTargets(int[] ids, List<Workbench> benches) {
+        for (int i = 0; i < ids.length; ++i) {
+            int id = ids[i];
+            Workbench bench = benches.stream().filter(b -> b.id == id).findFirst().get();
+            targets.add(new RobotTarget(bench));
         }
+        Output.debug(targets.size());
     }
 
     public LineSegment getCurrentPath() {

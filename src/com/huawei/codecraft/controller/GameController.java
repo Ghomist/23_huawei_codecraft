@@ -6,7 +6,6 @@ import java.util.List;
 import com.huawei.codecraft.entity.Workbench;
 import com.huawei.codecraft.entity.GameMap;
 import com.huawei.codecraft.entity.Robot;
-import com.huawei.codecraft.entity.Scheme;
 import com.huawei.codecraft.io.Input;
 import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
@@ -27,7 +26,6 @@ public class GameController {
     private GameMap map;
     private Robot[] robots = new Robot[4];
     private List<Workbench> benches = new ArrayList<>();
-    private List<Scheme> schemes = new ArrayList<>();
 
     public void init() {
         instance = this;
@@ -89,19 +87,14 @@ public class GameController {
     }
 
     private void start() {
-        // Todo: init schedule
-        for (int i = 0; i < benches.size(); ++i) {
-            Workbench start = benches.get(i);
-            for (int j = 0; j < benches.size(); ++j) {
-                if (i == j)
-                    continue;
-                Workbench end = benches.get(j);
-                if (Scheme.isAvailableScheme(start, end)) {
-                    schemes.add(new Scheme(this, start, end));
-                }
-            }
+        switch (benches.size()) {
+            case 43:
+                robots[0].addTargets(Scheduler.path_43[0], benches);
+                robots[1].addTargets(Scheduler.path_43[1], benches);
+                robots[2].addTargets(Scheduler.path_43[2], benches);
+                robots[3].addTargets(Scheduler.path_43[3], benches);
+                break;
         }
-        // schedule(); // schedule advance
     }
 
     private void update() {
@@ -138,25 +131,6 @@ public class GameController {
     }
 
     private void schedule() {
-        for (Robot robot : robots) {
-            if (robot.isFree()) {
-                schemes.sort((sa, sb) -> {
-                    if (sa.isAvailable(robot) && !sb.isAvailable(robot)) {
-                        return -1;
-                    } else if (!sa.isAvailable(robot) && sb.isAvailable(robot)) {
-                        return 1;
-                    } else if (sa.isAvailable(robot) && sb.isAvailable(robot)) {
-                        return Double.compare(sb.getAverageProfit(robot), sa.getAverageProfit(robot));
-                    } else {
-                        return 0;
-                    }
-                });
-                Scheme pendingScheme = schemes.get(0);
-                if (pendingScheme.isAvailable(robot)) {
-                    robot.setScheme(pendingScheme);
-                }
-            }
-        }
     }
 
     private void sendCommands() {
