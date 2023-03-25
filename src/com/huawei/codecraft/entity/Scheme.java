@@ -13,9 +13,9 @@ public class Scheme {
 
     public Workbench start;
     public Workbench end;
-    public int priority_4 = 0;
-    public int priority_5 = 0;
-    public int priority_6 = 0;
+    public int priority_4_create = 0;
+    public int priority_5_create = 0;
+    public int priority_6_create = 0;
 
     private int itemType;
     private GameController controller;
@@ -90,17 +90,21 @@ public class Scheme {
         double expectWaitTime = Math.max(timeNoWait, timeWait);
         double expectTime = expectWaitTime + expectTrafficTime;
         if (end.getType() == 4)
-            return expectProfit / (expectTime) * (1 + priority_4)
+            return expectProfit / (expectTime) * (1 + priority_4_create)
                     + 750 * end.missingMaterialWeight()
                     - (notRecommend ? 300 : 0);
         else if (end.getType() == 5)
-            return expectProfit / (expectTime) * (1 + priority_5)
+            return expectProfit / (expectTime) * (1 + priority_5_create)
                     + 750 * end.missingMaterialWeight()
                     - (notRecommend ? 300 : 0);
         else if (end.getType() == 6)
-            return expectProfit / (expectTime) * (1 + priority_6)
+            return expectProfit / (expectTime) * (1 + priority_6_create)
                     + 750 * end.missingMaterialWeight()
                     - (notRecommend ? 300 : 0);
+        else if (start.getType()==4)
+        {
+            
+        }
         else
             return expectProfit / (expectTime)
                     + 750 * end.missingMaterialWeight()
@@ -114,11 +118,11 @@ public class Scheme {
 
     public void increasePriority(int type) {
         if (type == 4)
-            priority_4 += 0.25;
+            priority_4_create += 0.25;
         else if (type == 5)
-            priority_5 += 0.25;
+            priority_5_create += 0.25;
         else if (type == 6)
-            priority_6 += 0.25;
+            priority_6_create += 0.25;
     }
 
     public void setPending() {
