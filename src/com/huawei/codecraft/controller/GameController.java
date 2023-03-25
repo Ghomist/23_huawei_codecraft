@@ -88,11 +88,17 @@ public class GameController {
 
     private void start() {
         switch (benches.size()) {
-            case 43:
+            case 43: // map 1
                 robots[0].addTargets(Scheduler.path_43[0], benches);
                 robots[1].addTargets(Scheduler.path_43[1], benches);
                 robots[2].addTargets(Scheduler.path_43[2], benches);
                 robots[3].addTargets(Scheduler.path_43[3], benches);
+                break;
+            case 18: // map 4
+                robots[0].addTargets(Scheduler.path_18[0], benches);
+                robots[1].addTargets(Scheduler.path_18[1], benches);
+                robots[2].addTargets(Scheduler.path_18[2], benches);
+                robots[3].addTargets(Scheduler.path_18[3], benches);
                 break;
         }
     }
