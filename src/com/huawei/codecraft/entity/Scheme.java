@@ -101,10 +101,10 @@ public class Scheme {
             return expectProfit / (expectTime) * (1 + priority_6_create)
                     + 750 * end.missingMaterialWeight()
                     - (notRecommend ? 300 : 0);
-        else if (start.getType()==4)
-        {
+        // else if (start.getType()==4)
+        // {
             
-        }
+        // }
         else
             return expectProfit / (expectTime)
                     + 750 * end.missingMaterialWeight()

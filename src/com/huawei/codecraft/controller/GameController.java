@@ -186,9 +186,9 @@ public class GameController {
             }
         }
         for (Scheme s : schemes){
-            s.priority_4 = p_4;
-            s.priority_5 = p_5;
-            s.priority_6 = p_6;
+            s.priority_4_create = p_4;
+            s.priority_5_create = p_5;
+            s.priority_6_create = p_6;
         } 
     }
 
