@@ -94,6 +94,12 @@ public class GameController {
                 robots[2].addTargets(Scheduler.path_43[2], benches);
                 robots[3].addTargets(Scheduler.path_43[3], benches);
                 break;
+            case 25: // map 2
+                robots[0].addTargets(Scheduler.path_25[0], benches);
+                robots[1].addTargets(Scheduler.path_25[1], benches);
+                robots[2].addTargets(Scheduler.path_25[2], benches);
+                robots[3].addTargets(Scheduler.path_25[3], benches);
+                break;
             case 18: // map 4
                 robots[0].addTargets(Scheduler.path_18[0], benches);
                 robots[1].addTargets(Scheduler.path_18[1], benches);

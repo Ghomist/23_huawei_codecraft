@@ -10,4 +10,4 @@ javac -encoding UTF-8 -d bin/ @sources.txt
 del sources.txt
 
 cd debug
-.\Robot.exe -f -m .\maps\4.txt -c ..\bin\ "java com.huawei.codecraft.Main restart" -r 0.rep
+.\Robot.exe -f -m .\maps\2.txt -c ..\bin\ "java com.huawei.codecraft.Main restart" -r 0.rep
