@@ -86,10 +86,11 @@ public class Scheme {
         double timeWait = start.getRemainFrames() / 50;
         double expectWaitTime = Math.max(timeNoWait, timeWait);
         double expectTime = expectWaitTime + expectTrafficTime;
-        return expectProfit / (expectTime)
+        return expectProfit / (expectTime) * controller.priority[end.getType()]
                 + 750 * end.missingMaterialWeight()
+                + (!controller.hasSeven && end.getType() == 9 && start.getType() >= 4 ? 300 : 0)
+                - (itemType <= 3 ? 200 : 0)
                 - (notRecommend ? 300 : 0);
-        // + (!controller.hasSeven && end.getType() == 9 ? 3000 : 0)
     }
 
     public int getType() {
