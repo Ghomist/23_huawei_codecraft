@@ -2,7 +2,6 @@ package com.huawei.codecraft.entity;
 
 import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.helper.PriceHelper;
-import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
 
 public class Scheme {

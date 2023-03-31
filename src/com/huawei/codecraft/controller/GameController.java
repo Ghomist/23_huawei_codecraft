@@ -52,7 +52,10 @@ public class GameController {
                         robotId++;
                         // fallthrough
                     case '.':
-                        map.SetGridType(x, y, 0);
+                        map.setGrid(x, y, 0);
+                        break;
+                    case '#':
+                        map.setGrid(x, y, -1);
                         break;
                     default:
                         // boolean nearByWall = x == 0 || x == 99 || y == 0 || y == 99;
@@ -63,7 +66,7 @@ public class GameController {
                             hasSeven = true;
                             sevenCount++;
                         }
-                        map.SetGridType(x, y, c - '0');
+                        map.setGrid(x, y, c - '0');
                         break;
                 }
             }
@@ -102,12 +105,6 @@ public class GameController {
                     continue;
                 Workbench end = benches.get(j);
                 if (Scheme.isAvailableScheme(start, end)) {
-            case 50: // map 3
-                robots[0].addTargets(Scheduler.path_50[0], benches);
-                robots[1].addTargets(Scheduler.path_50[1], benches);
-                robots[2].addTargets(Scheduler.path_50[2], benches);
-                robots[3].addTargets(Scheduler.path_50[3], benches);
-                break;
                     schemes.add(new Scheme(this, start, end));
                 }
             }

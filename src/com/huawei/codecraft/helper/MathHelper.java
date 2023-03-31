@@ -10,4 +10,10 @@ public class MathHelper {
             return num;
         }
     }
+
+    public static int round(double n) {
+        int integer = (int) n;
+        double decimal = n - integer;
+        return decimal > 0.5 ? integer + 1 : integer;
+    }
 }
