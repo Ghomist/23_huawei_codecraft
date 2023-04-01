@@ -2,11 +2,13 @@ package com.huawei.codecraft.entity;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
@@ -91,11 +93,11 @@ public class Robot {
         // if (id != 0)
         // return;
         double dis = -1;
-        boolean judge = false;
+        // boolean judge = false;
         if (targets.size() > 0) {
             RobotTarget target = targets.getFirst();
             Vector2 targetPos = target.pos;
-            judge = target.bench.isDangerous();
+            // judge = target.bench.isDangerous();
             double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
             double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
             dis = dist;
@@ -103,25 +105,30 @@ public class Robot {
             prefVelocity = Vector2.getFromRadian(targetDir,
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
-            if (isAtWorkbench()) {
-                if (target.bench == null) {
-                    // if (dist < BENCH_TEST_DIST / 2)
-                    finishTarget();
-                } else {
-                    if (getAtWorkbenchID() == target.bench.id) {
-                        if (hasItem()) {
-                            sell();
-                            finishTarget();
-                            scheme.finish();
-                            scheme = null;
-                        } else if (target.bench.hasProduction()) {
-                            buy();
-                            scheme.onSending();
-                            finishTarget();
-                        }
-                    }
-                }
+            if (dist < 0.3) {
+                Output.debug(targets.size());
+                finishTarget();
             }
+
+            // if (isAtWorkbench()) {
+            //     if (target.bench == null) {
+            //         // if (dist < BENCH_TEST_DIST / 2)
+            //         finishTarget();
+            //     } else {
+            //         if (getAtWorkbenchID() == target.bench.id) {
+            //             if (hasItem()) {
+            //                 sell();
+            //                 finishTarget();
+            //                 scheme.finish();
+            //                 scheme = null;
+            //             } else if (target.bench.hasProduction()) {
+            //                 buy();
+            //                 scheme.onSending();
+            //                 finishTarget();
+            //             }
+            //         }
+            //     }
+            // }
         } else {
             prefVelocity = Vector2.ZERO;
         }
@@ -133,7 +140,8 @@ public class Robot {
 
         // set speed to pref velocity
         double speedK = Math.cos(Math.abs(diff));
-        if (dis < 0.8 && dis > 0.1 && judge)
+        // if (dis < 0.8 && dis > 0.1 && judge)
+        if (dis < 0.8 && dis > 0.1)
             setForwardSpeed(speedK * MAX_FORWARD_SPEED * (dis + 0.12));
         else
             setForwardSpeed(speedK * MAX_FORWARD_SPEED);
@@ -280,6 +288,13 @@ public class Robot {
 
     private void finishTarget() {
         targets.removeFirst();
+    }
+
+    public void addTargets(List<Vector2> list) {
+        List<RobotTarget> targets = list.stream()
+                .map(x -> new RobotTarget(x))
+                .collect(Collectors.toList());
+        this.targets.addAll(targets);
     }
 
     public void setScheme(Scheme scheme) {

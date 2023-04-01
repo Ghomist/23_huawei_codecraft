@@ -34,8 +34,8 @@ public class GameController {
 
     public void init() {
         instance = this;
-        map = new GameMap();
         String line;
+        int[][] grids = new int[100][100];
         int x = 0;
         int robotId = 0;
         while (Input.hasNextLine()) {
@@ -52,10 +52,10 @@ public class GameController {
                         robotId++;
                         // fallthrough
                     case '.':
-                        map.setGrid(x, y, 0);
+                        grids[x][y] = 0;
                         break;
                     case '#':
-                        map.setGrid(x, y, -1);
+                        grids[x][y] = -1;
                         break;
                     default:
                         // boolean nearByWall = x == 0 || x == 99 || y == 0 || y == 99;
@@ -66,7 +66,7 @@ public class GameController {
                             hasSeven = true;
                             sevenCount++;
                         }
-                        map.setGrid(x, y, c - '0');
+                        grids[x][y] = c - '0';
                         break;
                 }
             }
@@ -75,6 +75,7 @@ public class GameController {
         // for (int i = 0; i < 4; ++i) {
         // robots[i] = new Robot();
         // }
+        map = new GameMap(grids);
         start();
         running = true;
         Output.ok();
@@ -107,6 +108,12 @@ public class GameController {
                 if (Scheme.isAvailableScheme(start, end)) {
                     schemes.add(new Scheme(this, start, end));
                 }
+            }
+        }
+        for (Robot r : robots) {
+            if (r.id == 0) {
+                List<Vector2> path = map.findPath(r.getPos(), benches.get(0).getPos());
+                r.addTargets(path);
             }
         }
         // schedule(); // schedule advance
@@ -146,59 +153,60 @@ public class GameController {
     }
 
     private void schedule() {
-        Arrays.fill(priority, 1);
-        for (Workbench bench : benches) {
-            if (bench.getType() != 7)
-                continue;
-            int _4 = bench.hasMaterial(4) ? 1 : 0;
-            int _5 = bench.hasMaterial(5) ? 1 : 0;
-            int _6 = bench.hasMaterial(6) ? 1 : 0;
-            int cnt = _4 + _5 + _6;
-            double K = 2;
-            if (cnt == 1) {
-                if (_4 == 1) {
-                    priority[5] += K / sevenCount;
-                    priority[6] += K / sevenCount;
-                }
-                if (_5 == 1) {
-                    priority[4] += K / sevenCount;
-                    priority[6] += K / sevenCount;
-                }
-                if (_6 == 1) {
-                    priority[4] += K / sevenCount;
-                    priority[5] += K / sevenCount;
-                }
-            } else if (cnt == 2) {
-                if (_4 == 0) {
-                    priority[4] += K / sevenCount;
-                }
-                if (_5 == 0) {
-                    priority[5] += K / sevenCount;
-                }
-                if (_6 == 0) {
-                    priority[6] += K / sevenCount;
-                }
-            }
-        }
-        for (Robot robot : robots) {
-            if (robot.isFree()) {
-                schemes.sort((sa, sb) -> {
-                    if (sa.isAvailable(robot) && !sb.isAvailable(robot)) {
-                        return -1;
-                    } else if (!sa.isAvailable(robot) && sb.isAvailable(robot)) {
-                        return 1;
-                    } else if (sa.isAvailable(robot) && sb.isAvailable(robot)) {
-                        return Double.compare(sb.getAverageProfit(robot), sa.getAverageProfit(robot));
-                    } else {
-                        return 0;
-                    }
-                });
-                Scheme pendingScheme = schemes.get(0);
-                if (pendingScheme.isAvailable(robot)) {
-                    robot.setScheme(pendingScheme);
-                }
-            }
-        }
+        // Arrays.fill(priority, 1);
+        // for (Workbench bench : benches) {
+        // if (bench.getType() != 7)
+        // continue;
+        // int _4 = bench.hasMaterial(4) ? 1 : 0;
+        // int _5 = bench.hasMaterial(5) ? 1 : 0;
+        // int _6 = bench.hasMaterial(6) ? 1 : 0;
+        // int cnt = _4 + _5 + _6;
+        // double K = 2;
+        // if (cnt == 1) {
+        // if (_4 == 1) {
+        // priority[5] += K / sevenCount;
+        // priority[6] += K / sevenCount;
+        // }
+        // if (_5 == 1) {
+        // priority[4] += K / sevenCount;
+        // priority[6] += K / sevenCount;
+        // }
+        // if (_6 == 1) {
+        // priority[4] += K / sevenCount;
+        // priority[5] += K / sevenCount;
+        // }
+        // } else if (cnt == 2) {
+        // if (_4 == 0) {
+        // priority[4] += K / sevenCount;
+        // }
+        // if (_5 == 0) {
+        // priority[5] += K / sevenCount;
+        // }
+        // if (_6 == 0) {
+        // priority[6] += K / sevenCount;
+        // }
+        // }
+        // }
+        // for (Robot robot : robots) {
+        // if (robot.isFree()) {
+        // schemes.sort((sa, sb) -> {
+        // if (sa.isAvailable(robot) && !sb.isAvailable(robot)) {
+        // return -1;
+        // } else if (!sa.isAvailable(robot) && sb.isAvailable(robot)) {
+        // return 1;
+        // } else if (sa.isAvailable(robot) && sb.isAvailable(robot)) {
+        // return Double.compare(sb.getAverageProfit(robot),
+        // sa.getAverageProfit(robot));
+        // } else {
+        // return 0;
+        // }
+        // });
+        // Scheme pendingScheme = schemes.get(0);
+        // if (pendingScheme.isAvailable(robot)) {
+        // robot.setScheme(pendingScheme);
+        // }
+        // }
+        // }
     }
 
     private void sendCommands() {
