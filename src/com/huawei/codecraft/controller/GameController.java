@@ -86,7 +86,7 @@ public class GameController {
             update();
             schedule();
             for (Robot robot : robots) {
-                robot.schedule(robots);
+                robot.schedule(robots, map.getObstacles());
                 // robot.avoidImpact(robots);
             }
             sendCommands();

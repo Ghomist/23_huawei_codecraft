@@ -1,5 +1,6 @@
 package com.huawei.codecraft.entity;
 
+import java.io.FileWriter;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -9,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.MathHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
 
 public class GameMap {
@@ -17,21 +19,25 @@ public class GameMap {
     public static final int EMPTY = 0;
 
     private int[][] grids = new int[100][100];
+    private List<Vector2> obstacles = new LinkedList<>();
 
     public GameMap(int[][] grids) {
         for (int x = 0; x < 100; ++x) {
             for (int y = 0; y < 100; ++y) {
                 this.grids[x][y] = grids[99 - y][x];
+                if (this.grids[x][y] == OBSTACLE) {
+                    obstacles.add(new Vector2(x / 2.0 + 2.5, y / 2.0 + 2.5));
+                }
             }
         }
     }
 
-    // public void setGrid(int x, int y, int type) {
-    // grids[x][y] = type;
-    // }
-
     public int get(int x, int y) {
         return grids[x][y];
+    }
+
+    public List<Vector2> getObstacles() {
+        return obstacles;
     }
 
     /**
@@ -39,31 +45,40 @@ public class GameMap {
      * 
      * @return {@code true} 如果存在障碍物
      */
-    public boolean hasObstacle(int x1, int y1, int x2, int y2) {
+    public boolean hasObstacle(int x1, int y1, int x2, int y2) { // TODO: 有问题不能使用
         int dx = Math.abs(x2 - x1);
         int dy = Math.abs(y2 - y1);
-        int sx = x1 < x2 ? 1 : -1;
-        int sy = y1 < y2 ? 1 : -1;
-        int err = dx - dy;
         int x = x1;
         int y = y1;
-
-        while (x != x2 || y != y2) {
-            if (grids[x][y] == -1) { // 有障碍物
+        int k = dy > dx ? dx * 2 : dy * 2;
+        int e = k - (dy > dx ? dx : dy);
+        int incX = x2 > x1 ? 1 : -1;
+        int incY = y2 > y1 ? 1 : -1;
+        for (int i = 0; i < k; i++) {
+            if (grids[x][y] == OBSTACLE) {
+                return false;
+            }
+            if (e > 0) {
+                if (dy > dx) {
+                    y += incY;
+                } else {
+                    x += incX;
+                }
+                e -= 2 * (dy > dx ? dx : dy);
+            }
+            if (dy > dx) {
+                x += incX;
+            } else {
+                y += incY;
+            }
+            e += 2 * (dy > dx ? dy : dx);
+            if (x == x2 && y == y2) {
                 return true;
             }
-            int e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                x += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
-            }
         }
-        return false; // 没有障碍物
+        return false;
     }
+    
 
     private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
         return hasObstacle(node1.x, node1.y, node2.x, node2.y);
@@ -110,9 +125,9 @@ public class GameMap {
                             // update the G value
                             Iterator<GameMapNode> it = visited.iterator();
                             while (it.hasNext()) {
-                                GameMapNode node = it.next();
-                                if (move.equals(node)) {
-                                    node.tryUpdateByPrevious(grids, move);
+                                GameMapNode theMove = it.next();
+                                if (move.equals(theMove)) {
+                                    theMove.tryUpdateByPrevious(grids, choice);
                                     break;
                                 }
                             }
@@ -131,6 +146,25 @@ public class GameMap {
                 endNode = endNode.pre;
             }
 
+            // for (var a : ans) {
+            // grids[a.x][a.y] = 10;
+            // }
+
+            // try (FileWriter fw = new FileWriter("aaaaa.txt")) {
+            // for (var a : grids) {
+            // for (var b : a) {
+            // char c = ' ';
+            // if (b == -1)
+            // c = '#';
+            // else if (b == 10)
+            // c = 'X';
+            // fw.append(c);
+            // }
+            // fw.append('\n');
+            // }
+            // } catch (Exception e) {
+            // }
+
             return smoothPath(ans);
         } else {
             // no path
@@ -142,14 +176,15 @@ public class GameMap {
         // Iterator<GameMapNode> it = path.iterator();
         // GameMapNode current = it.next();
         // while (it.hasNext()) {
-        // GameMapNode next = it.next();
-        // if (!hasObstacle(current, next)) {
-        // // 移除多余的顶点
-        // it.remove();
-        // } else {
-        // // 从新的顶点开始计算
-        // current = next;
-        // }
+        //     GameMapNode next = it.next();
+        //     // if (!hasObstacle(current, next)) {
+        //     if (current.x == next.x || current.y == next.y) {
+        //         // 移除多余的顶点
+        //         it.remove();
+        //     } else {
+        //         // 从新的顶点开始计算
+        //         current = next;
+        //     }
         // }
         return path.stream()
                 .map(x -> x.getPos())

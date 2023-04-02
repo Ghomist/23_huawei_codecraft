@@ -8,7 +8,7 @@ class GameMapNode implements Comparable<GameMapNode> {
     public final int x;
     public final int y;
     public double g;
-    public final double h;
+    public double h;
     public double f;
     public GameMapNode pre;
 
@@ -18,10 +18,11 @@ class GameMapNode implements Comparable<GameMapNode> {
         if (pre == null) {
             g = 0;
         } else {
-            double g = pre.g + (pre.x == x || pre.y == y ? 1 : 1.414);
-            this.g = nearByWall ? g * 5 : g; // use node near by wall less
+            g = pre.g + (pre.x == x || pre.y == y ? 1 : 1.414);
         }
         h = Math.sqrt(Math.pow(pos[0] - end[0], 2) + Math.pow(pos[1] - end[1], 2));
+        if (nearByWall)
+            h *= 50; // use node near by wall less
         f = g + h;
         this.pre = pre;
     }
@@ -43,8 +44,8 @@ class GameMapNode implements Comparable<GameMapNode> {
 
     public void tryUpdateByPrevious(int[][] map, GameMapNode pre) {
         double newG = pre.g + (pre.x == x || pre.y == y ? 1 : 1.414);
-        boolean nearByWall = isNearByWall(map, x, y);
-        newG = nearByWall ? newG * 5 : newG;
+        // boolean nearByWall = isNearByWall(map, x, y);
+        // newG = nearByWall ? newG * 5 : newG;
         if (newG < g) {
             g = newG;
             f = g + h;

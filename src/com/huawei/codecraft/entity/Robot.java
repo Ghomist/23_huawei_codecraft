@@ -36,6 +36,7 @@ public class Robot {
     public static final double RVO2_ADJUST_RATE_HIGH = 1.6;
     public static final double RVO2_ADJUST_RATE_LOW = 1.3;
     public static final double RVO2_ADJUST_RATE_WALL = 1.45;
+    public static final boolean RVO2_AVOID_WALL = false;
 
     public int id;
 
@@ -89,7 +90,7 @@ public class Robot {
         cmdList.clear();
     }
 
-    public void schedule(Robot[] robots) {
+    public void schedule(Robot[] robots, List<Vector2> obstacles) {
         // if (id != 0)
         // return;
         double dis = -1;
@@ -105,35 +106,34 @@ public class Robot {
             prefVelocity = Vector2.getFromRadian(targetDir,
                     prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
-            if (dist < 0.3) {
-                Output.debug(targets.size());
+            if (dist < 0.4) {
                 finishTarget();
             }
 
             // if (isAtWorkbench()) {
-            //     if (target.bench == null) {
-            //         // if (dist < BENCH_TEST_DIST / 2)
-            //         finishTarget();
-            //     } else {
-            //         if (getAtWorkbenchID() == target.bench.id) {
-            //             if (hasItem()) {
-            //                 sell();
-            //                 finishTarget();
-            //                 scheme.finish();
-            //                 scheme = null;
-            //             } else if (target.bench.hasProduction()) {
-            //                 buy();
-            //                 scheme.onSending();
-            //                 finishTarget();
-            //             }
-            //         }
-            //     }
+            // if (target.bench == null) {
+            // // if (dist < BENCH_TEST_DIST / 2)
+            // finishTarget();
+            // } else {
+            // if (getAtWorkbenchID() == target.bench.id) {
+            // if (hasItem()) {
+            // sell();
+            // finishTarget();
+            // scheme.finish();
+            // scheme = null;
+            // } else if (target.bench.hasProduction()) {
+            // buy();
+            // scheme.onSending();
+            // finishTarget();
+            // }
+            // }
+            // }
             // }
         } else {
             prefVelocity = Vector2.ZERO;
         }
         // RVO2
-        avoidImpact(robots);
+        avoidImpact(robots, obstacles);
 
         // diff to pref velocity
         double diff = RadianHelper.diff(dir, prefVelocity.radian());
@@ -150,7 +150,7 @@ public class Robot {
         setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
     }
 
-    private void avoidImpact(Robot[] robots) { // RVO2
+    private void avoidImpact(Robot[] robots, List<Vector2> obstacles) { // RVO2
         planes.clear();
 
         Vector2 finalU = Vector2.ZERO;
@@ -192,6 +192,90 @@ public class Robot {
                 finalU = finalU.add(u);
             }
         }
+
+        // detect obstacles (recognize wall as circle)
+        if (RVO2_AVOID_WALL)
+            for (Vector2 obsPos : obstacles) {
+                if (Vector2.distance(pos, obsPos) > RVO2_AVOID_DIST)
+                    continue;
+
+                final Vector2 relativePosition = obsPos.subtract(pos);
+                final Vector2 relativeVelocity = getLineSpeed();
+                final double dist2 = relativePosition.length2();
+                final double rr = getRadius() + 0.25 * Math.sqrt(2);
+                final double rr2 = rr * rr;
+
+                // 在三角锥的外面
+                final double theta = Math.abs(Math.asin(rr / relativePosition.length()));
+                final double diff = Math.acos(Vector2.cos(relativePosition, relativeVelocity));
+                if (diff > theta)
+                    continue;
+
+                final Vector2 direction;
+                final Vector2 u;
+
+                // 还未发生碰撞
+                if (dist2 > rr2) {
+                    // 圆中心到相对速度
+                    final Vector2 w = relativeVelocity.subtract(INV_TAO, relativePosition);
+                    final double wLen2 = w.length2();
+                    final double dotProduct1 = w.dot(relativePosition);
+
+                    // 检测到要发生碰撞
+                    // 前端碰撞
+                    if (dotProduct1 < 0.0 && dotProduct1 * dotProduct1 > rr2 * wLen2) { // ?
+                        // Output.debug("forward");
+                        final double wLength = Math.sqrt(wLen2);
+                        final Vector2 unitW = w.multiply(1.0 / wLength);
+
+                        direction = new Vector2(unitW.y, -unitW.x);
+                        u = unitW.multiply(rr * INV_TAO - wLength);
+                    } else if (relativePosition.multiply(INV_TAO).length2()
+                            - Math.pow(rr * INV_TAO, 2) < relativeVelocity.length2()) {
+                        // Output.debug("side");
+                        // 侧边碰撞
+                        final double leg = Math.sqrt(dist2 - rr2);
+
+                        if (Vector2.cross(relativePosition, w) > 0.0) {
+                            // Project on left leg. 方向向量投影到 leg
+                            direction = new Vector2(
+                                    relativePosition.x * leg - relativePosition.y * rr,
+                                    relativePosition.x * rr + relativePosition.y * leg)
+                                    .multiply(1.0 / dist2);
+                        } else {
+                            // Project on right leg.
+                            direction = new Vector2(
+                                    relativePosition.x * leg + relativePosition.y * rr,
+                                    -relativePosition.x * rr + relativePosition.y * leg)
+                                    .multiply(-1.0 / dist2);
+                        }
+
+                        final double dotProduct2 = relativeVelocity.dot(direction);
+                        u = direction.multiply(dotProduct2).subtract(relativeVelocity);
+                    } else {
+                        continue;
+                    }
+                } else {
+                    // Output.debug("Impacted！");
+                    // Collision. Project on cut-off circle of time timeStep.
+                    final double invTimeStep = 1.0 / 0.02;
+
+                    // Vector from cutoff center to relative velocity.
+                    final Vector2 w = relativeVelocity.subtract(invTimeStep, relativePosition);
+
+                    final double wLength = w.length();
+                    final Vector2 unitW = w.multiply(1.0 / wLength);
+
+                    direction = new Vector2(unitW.y, -unitW.x);
+                    u = unitW.multiply(rr * invTimeStep - wLength);
+                }
+
+                final Vector2 point = getLineSpeed().add(1, u);
+                // lines.add(new HalfPlane(new Line(point, direction), u));
+                planes.add(new HalfPlane(new Line(point, direction), u));
+
+                finalU = finalU.add(1, u);
+            }
 
         // detect other robots
         for (Robot other : robots) {
