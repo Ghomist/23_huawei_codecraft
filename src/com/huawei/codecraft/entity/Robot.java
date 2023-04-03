@@ -71,6 +71,10 @@ public class Robot {
         this.v = Vector2.ZERO;
     }
 
+    public void start(Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
+        // TODO: 初始化
+    }
+
     public void update(int id, String info) {
         this.id = id;
 

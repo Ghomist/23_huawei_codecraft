@@ -94,6 +94,9 @@ public class GameController {
     }
 
     private void start() {
+        for (Robot robot : robots) {
+            robot.start(robots, benches, map.getObstacles());
+        }
         // for (int i = 0; i < benches.size(); ++i) {
         // Workbench start = benches.get(i);
         // for (int j = 0; j < benches.size(); ++j) {
@@ -106,6 +109,11 @@ public class GameController {
         // schemes.add(new Scheme(this, start, end, path));
         // }
         // }
+        // }
+        // }
+        // for (Robot r : robots) {
+        // if (r.id == 0) {
+
         // }
         // }
     }

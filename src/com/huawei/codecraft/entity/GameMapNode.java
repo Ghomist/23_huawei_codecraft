@@ -2,6 +2,7 @@ package com.huawei.codecraft.entity;
 
 import java.util.Objects;
 
+import com.huawei.codecraft.helper.ArrayHelper;
 import com.huawei.codecraft.math.Vector2;
 
 class GameMapNode implements Comparable<GameMapNode> {
@@ -20,7 +21,8 @@ class GameMapNode implements Comparable<GameMapNode> {
         } else {
             g = pre.g + (pre.x == x || pre.y == y ? 1 : 1.414);
         }
-        h = Math.sqrt(Math.pow(pos[0] - end[0], 2) + Math.pow(pos[1] - end[1], 2));
+        // h = Math.sqrt(Math.pow(pos[0] - end[0], 2) + Math.pow(pos[1] - end[1], 2));
+        h = Math.abs(pos[0] - end[0]) + Math.abs(pos[1] - end[1]);
         if (nearByWall)
             h *= 5; // use node near by wall less
         f = g + h;
@@ -31,21 +33,19 @@ class GameMapNode implements Comparable<GameMapNode> {
         return new GameMapNode(start, end, null, false);
     }
 
-    public GameMapNode makeMove(int[][] map, int moveX, int moveY, int[] end) {
+    public GameMapNode makeMove(int[][] map, int moveX, int moveY, int[] end,boolean strict) {
         int x = this.x + moveX;
         int y = this.y + moveY;
-        if (x < 0 || x >= 100 || y < 0 || y >= 100)
-            return null;
-        if (map[x][y] == -1)
+        if (ArrayHelper.safeGet(map, x, y, GameMap.OBSTACLE) == GameMap.OBSTACLE)
             return null;
         boolean nearByWall = isNearByWall(map, x, y);
+        if (strict && nearByWall)
+            return null;
         return new GameMapNode(new int[] { x, y }, end, this, nearByWall);
     }
 
     public void tryUpdateByPrevious(int[][] map, GameMapNode pre) {
         double newG = pre.g + (pre.x == x || pre.y == y ? 1 : 1.414);
-        // boolean nearByWall = isNearByWall(map, x, y);
-        // newG = nearByWall ? newG * 5 : newG;
         if (newG < g) {
             g = newG;
             f = g + h;
@@ -60,9 +60,7 @@ class GameMapNode implements Comparable<GameMapNode> {
     private boolean isNearByWall(int[][] map, int x, int y) {
         for (int i = -1; i <= 1; ++i) {
             for (int j = -1; j <= 1; ++j) {
-                if (x + i < 0 || x + i >= 100 || y + j < 0 || y + j >= 100)
-                    continue;
-                if (map[x + i][y + j] == -1) {
+                if (ArrayHelper.safeGet(map, x + i, y + j, GameMap.OBSTACLE) == GameMap.OBSTACLE) {
                     return true;
                 }
             }
