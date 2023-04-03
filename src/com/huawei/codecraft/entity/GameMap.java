@@ -30,7 +30,7 @@ public class GameMap {
                 }
             }
         }
-        obstacles = obs.toArray(Vector2[]::new);
+        obstacles = obs.toArray(new Vector2[obs.size()]);
         for (int x = 0; x < 100; ++x) {
             for (int y = 0; y < 100; ++y) {
                 boolean u = false, d = false, l = false, r = false;
