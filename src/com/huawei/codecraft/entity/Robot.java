@@ -26,7 +26,12 @@ public class Robot {
     public static final double MASS = Math.PI * RADIUS * RADIUS * DENSITY;
     public static final double BENCH_TEST_DIST = 0.4;
 
-    /// RVO2 params
+    // Dist-to-Stop params
+    public static final double DIST_ARRIVE = 0.39; // go to next target
+    public static final double DIST_SLOW_DOWN = 0.8; // set speed down
+    public static final double DIST_STOP = 0.3; // set speed to 0
+
+    // RVO2 params
     public static final boolean USE_RVO2 = true; // most priority
     public static final boolean USE_RVO = false;
     public static final double RVO2_AVOID_DIST = 5; // min is 5.3 * 2 = 1.06
@@ -91,22 +96,33 @@ public class Robot {
     }
 
     public void schedule(Robot[] robots, List<Vector2> obstacles) {
-        // if (id != 0)
-        // return;
-        double dis = -1;
-        // boolean judge = false;
         if (targets.size() > 0) {
+            // get target
             RobotTarget target = targets.getFirst();
             Vector2 targetPos = target.pos;
-            // judge = target.bench.isDangerous();
-            double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
-            double dist = Vector2.distance(targetPos, pos) * 0.8; // Todo: change param
-            dis = dist;
-            double prefSpeed = MathHelper.clamp(MAX_BACKWARD_SPEED, MAX_FORWARD_SPEED, 1.2 * dist);
-            prefVelocity = Vector2.getFromRadian(targetDir,
-                    prefSpeed > MAX_FORWARD_SPEED ? MAX_FORWARD_SPEED : prefSpeed);
 
-            if (dist < 0.4) {
+            // find target direction
+            double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+
+            // find best speed
+            double distToTarget = Vector2.distance(targetPos, pos);
+            double prefSpeed;
+            if (distToTarget < DIST_STOP) {
+                // stop
+                prefSpeed = 0;
+            } else if (distToTarget < DIST_SLOW_DOWN) {
+                // slow down
+                prefSpeed = MAX_FORWARD_SPEED * distToTarget;
+            } else {
+                // full speed forward
+                prefSpeed = MAX_FORWARD_SPEED;
+            }
+
+            // calculate best velocity
+            prefVelocity = Vector2.getFromRadian(targetDir, prefSpeed);
+
+            // if arrive target
+            if (distToTarget < DIST_ARRIVE) {
                 finishTarget();
             }
 
@@ -130,24 +146,25 @@ public class Robot {
             // }
             // }
         } else {
+            // no target, stop and wait
             prefVelocity = Vector2.ZERO;
         }
+
         // RVO2
         avoidImpact(robots, obstacles);
 
-        // diff to pref velocity
+        // calculate diff to pref velocity
         double diff = RadianHelper.diff(dir, prefVelocity.radian());
 
-        // set speed to pref velocity
+        // lead current velocity to pref velocity
         double speedK = Math.cos(Math.abs(diff));
-        // if (dis < 0.8 && dis > 0.1 && judge)
-        if (dis < 0.8 && dis > 0.1)
-            setForwardSpeed(speedK * MAX_FORWARD_SPEED * (dis + 0.12));
-        else
-            setForwardSpeed(speedK * MAX_FORWARD_SPEED);
+        setForwardSpeed(speedK * prefVelocity.length());
 
-        // set rotate to pref velocity
+        // rotate to pref velocity
         setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
+
+        if (id == 0)
+                Output.debug(pos);
     }
 
     private void avoidImpact(Robot[] robots, List<Vector2> obstacles) { // RVO2
@@ -379,6 +396,10 @@ public class Robot {
                 .map(x -> new RobotTarget(x))
                 .collect(Collectors.toList());
         this.targets.addAll(targets);
+    }
+
+    public void addTarget(Vector2 pos) {
+        targets.add(new RobotTarget(pos));
     }
 
     public void setScheme(Scheme scheme) {

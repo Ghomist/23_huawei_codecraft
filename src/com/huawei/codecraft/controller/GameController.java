@@ -114,6 +114,7 @@ public class GameController {
             if (r.id == 0) {
                 List<Vector2> path = map.findPath(r.getPos(), benches.get(0).getPos());
                 r.addTargets(path);
+                // r.addTarget(new Vector2(2.5, 2.5));
             }
         }
         // schedule(); // schedule advance
