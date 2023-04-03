@@ -22,7 +22,7 @@ class GameMapNode implements Comparable<GameMapNode> {
         }
         h = Math.sqrt(Math.pow(pos[0] - end[0], 2) + Math.pow(pos[1] - end[1], 2));
         if (nearByWall)
-            h *= 50; // use node near by wall less
+            h *= 5; // use node near by wall less
         f = g + h;
         this.pre = pre;
     }

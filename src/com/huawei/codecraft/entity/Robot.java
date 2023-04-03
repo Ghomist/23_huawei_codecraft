@@ -2,10 +2,8 @@ package com.huawei.codecraft.entity;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.LinearProgramHelper;
-import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
 import com.huawei.codecraft.io.Output;
@@ -28,7 +26,7 @@ public class Robot {
 
     // Dist-to-Stop params
     public static final double DIST_ARRIVE = 0.39; // go to next target
-    public static final double DIST_SLOW_DOWN = 0.8; // set speed down
+    public static final double DIST_SLOW_DOWN = 0.6; // set speed down
     public static final double DIST_STOP = 0.3; // set speed to 0
 
     // RVO2 params
@@ -42,6 +40,7 @@ public class Robot {
     public static final double RVO2_ADJUST_RATE_LOW = 1.3;
     public static final double RVO2_ADJUST_RATE_WALL = 1.45;
     public static final boolean RVO2_AVOID_WALL = false;
+    public static final boolean RVO2_AVOID_EDGE = true;
 
     public int id;
 
@@ -55,9 +54,8 @@ public class Robot {
     private Vector2 pos;
     private Vector2 prefVelocity = Vector2.ZERO;
 
-    private Scheme scheme;
-
-    private LinkedList<RobotTarget> targets = new LinkedList<>();
+    private int targetWorkbench;
+    private LinkedList<Vector2> targets = new LinkedList<>();
 
     private List<HalfPlane> planes = new LinkedList<>();
     private List<String> cmdList = new LinkedList<>();
@@ -83,29 +81,65 @@ public class Robot {
         timeValueArg = Double.parseDouble(parts[2]);
         impactValueArg = Double.parseDouble(parts[3]);
         w = Double.parseDouble(parts[4]);
-        double vx = Double.parseDouble(parts[5]);
-        double vy = Double.parseDouble(parts[6]);
+        final double vx = Double.parseDouble(parts[5]);
+        final double vy = Double.parseDouble(parts[6]);
         v = new Vector2(vx, vy);
         dir = Double.parseDouble(parts[7]);
 
-        double x = Double.parseDouble(parts[8]);
-        double y = Double.parseDouble(parts[9]);
+        final double x = Double.parseDouble(parts[8]);
+        final double y = Double.parseDouble(parts[9]);
         pos = new Vector2(x, y);
 
         cmdList.clear();
     }
 
-    public void schedule(Robot[] robots, List<Vector2> obstacles) {
+    public void schedule(Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
+        // self schedule
+        selfSchedule(benches);
+        
+        // generate pref velocity according to target
+        genPrefVelocity();
+
+        // RVO2
+        avoidImpact(robots, obstacles);
+
+        // calculate diff to pref velocity
+        final double diff = RadianHelper.diff(dir, prefVelocity.radian());
+
+        // lead current velocity to pref velocity
+        final double speedK = Math.cos(Math.abs(diff));
+        setForwardSpeed(speedK * prefVelocity.length());
+
+        // rotate to pref velocity
+        setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
+    }
+
+    private void finishTarget() {
+        targets.removeFirst();
+    }
+
+    public void addTargets(List<Vector2> list) {
+        this.targets.addAll(list);
+    }
+
+    public void addTarget(Vector2 pos) {
+        targets.add(pos);
+    }
+
+    private void selfSchedule(Workbench[] benches) {
+        // TODO: 决策
+    }
+
+    private void genPrefVelocity() {
         if (targets.size() > 0) {
             // get target
-            RobotTarget target = targets.getFirst();
-            Vector2 targetPos = target.pos;
+            final Vector2 targetPos = targets.getFirst();
 
             // find target direction
-            double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
+            final double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
 
             // find best speed
-            double distToTarget = Vector2.distance(targetPos, pos);
+            final double distToTarget = Vector2.distance(targetPos, pos);
             double prefSpeed;
             if (distToTarget < DIST_STOP) {
                 // stop
@@ -149,64 +183,50 @@ public class Robot {
             // no target, stop and wait
             prefVelocity = Vector2.ZERO;
         }
-
-        // RVO2
-        avoidImpact(robots, obstacles);
-
-        // calculate diff to pref velocity
-        double diff = RadianHelper.diff(dir, prefVelocity.radian());
-
-        // lead current velocity to pref velocity
-        double speedK = Math.cos(Math.abs(diff));
-        setForwardSpeed(speedK * prefVelocity.length());
-
-        // rotate to pref velocity
-        setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
-
-        if (id == 0)
-                Output.debug(pos);
     }
 
-    private void avoidImpact(Robot[] robots, List<Vector2> obstacles) { // RVO2
+    private void avoidImpact(Robot[] robots, Vector2[] obstacles) { // RVO2
         planes.clear();
 
         Vector2 finalU = Vector2.ZERO;
 
         // detect the wall (edge)
-        if (pos.y <= RVO2_AVOID_DIST_WALL) {
-            final double relativeDist = -pos.y * INV_TAO;
-            if (getLineSpeed().y < relativeDist) {
-                Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
-                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
-                planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.UP));
-                finalU = finalU.add(u);
+        if (RVO2_AVOID_EDGE) {
+            if (pos.y <= RVO2_AVOID_DIST_WALL) {
+                final double relativeDist = -pos.y * INV_TAO;
+                if (getLineSpeed().y < relativeDist) {
+                    Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
+                    Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
+                    planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.UP));
+                    finalU = finalU.add(u);
+                }
             }
-        }
-        if (pos.y >= 50 - RVO2_AVOID_DIST_WALL) {
-            final double relativeDist = (50 - pos.y) * INV_TAO;
-            if (getLineSpeed().y > relativeDist) {
-                Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
-                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
-                planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.DOWN));
-                finalU = finalU.add(u);
+            if (pos.y >= 50 - RVO2_AVOID_DIST_WALL) {
+                final double relativeDist = (50 - pos.y) * INV_TAO;
+                if (getLineSpeed().y > relativeDist) {
+                    Vector2 u = new Vector2(0, relativeDist - getLineSpeed().y);
+                    Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
+                    planes.add(new HalfPlane(new Line(point, Vector2.RIGHT), Vector2.DOWN));
+                    finalU = finalU.add(u);
+                }
             }
-        }
-        if (pos.x <= RVO2_AVOID_DIST_WALL) {
-            final double relativeDist = -pos.x * INV_TAO;
-            if (getLineSpeed().x < relativeDist) {
-                Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
-                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
-                planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.RIGHT));
-                finalU = finalU.add(u);
+            if (pos.x <= RVO2_AVOID_DIST_WALL) {
+                final double relativeDist = -pos.x * INV_TAO;
+                if (getLineSpeed().x < relativeDist) {
+                    Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
+                    Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
+                    planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.RIGHT));
+                    finalU = finalU.add(u);
+                }
             }
-        }
-        if (pos.x >= 50 - RVO2_AVOID_DIST_WALL) {
-            final double relativeDist = (50 - pos.x) * INV_TAO;
-            if (getLineSpeed().x > relativeDist) {
-                Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
-                Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
-                planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.LEFT));
-                finalU = finalU.add(u);
+            if (pos.x >= 50 - RVO2_AVOID_DIST_WALL) {
+                final double relativeDist = (50 - pos.x) * INV_TAO;
+                if (getLineSpeed().x > relativeDist) {
+                    Vector2 u = new Vector2(relativeDist - getLineSpeed().x, 0);
+                    Vector2 point = getLineSpeed().add(RVO2_ADJUST_RATE_WALL, u);
+                    planes.add(new HalfPlane(new Line(point, Vector2.UP), Vector2.LEFT));
+                    finalU = finalU.add(u);
+                }
             }
         }
 
@@ -387,44 +407,8 @@ public class Robot {
         }
     }
 
-    private void finishTarget() {
-        targets.removeFirst();
-    }
-
-    public void addTargets(List<Vector2> list) {
-        List<RobotTarget> targets = list.stream()
-                .map(x -> new RobotTarget(x))
-                .collect(Collectors.toList());
-        this.targets.addAll(targets);
-    }
-
-    public void addTarget(Vector2 pos) {
-        targets.add(new RobotTarget(pos));
-    }
-
-    public void setScheme(Scheme scheme) {
-        if (this.scheme != scheme) {
-            if (this.scheme != null) {
-                this.scheme.cancelPending();
-            }
-            this.scheme = scheme;
-            targets.clear();
-            targets.addLast(new RobotTarget(scheme.start));
-            targets.addLast(new RobotTarget(scheme.end));
-            scheme.setPending();
-        }
-    }
-
     public LineSegment getCurrentPath() {
-        return new LineSegment(pos, targets.getFirst().pos);
-    }
-
-    public void setPrefForwardSpeed(double speed) {
-
-    }
-
-    public void setPrefRotateSpeed(double speed) {
-        cmdList.add("rotate " + id + ' ' + speed);
+        return new LineSegment(pos, targets.getFirst());
     }
 
     public void setForwardSpeed(double speed) {

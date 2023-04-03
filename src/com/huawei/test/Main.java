@@ -61,7 +61,7 @@ public class Main {
         // robots[i] = new Robot();
         // }
         GameMap map = new GameMap(grids);
-        map.findPath(new Vector2(1, 49), new Vector2(25, 49));
+        map.findPath(new Vector2(1, 49), new Vector2(25, 49), false);
 
         // System.out.println("Hello Debug...");
         // System.out.println("测试：线性规划");

@@ -1,9 +1,12 @@
 package com.huawei.codecraft.entity;
 
+import java.util.List;
+
 import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.math.Vector2;
 
+@Deprecated
 public class Scheme {
 
     public static final double AVERAGE_MAX_SPEED = Robot.MAX_FORWARD_SPEED - 0.6;
@@ -12,9 +15,10 @@ public class Scheme {
 
     public Workbench start;
     public Workbench end;
-
+    
     private int itemType;
     private GameController controller;
+    private List<Vector2> path;
 
     private boolean isPending = false;
 
@@ -23,10 +27,11 @@ public class Scheme {
 
     private boolean notRecommend;
 
-    public Scheme(GameController controller, Workbench start, Workbench end) {
+    public Scheme(GameController controller, Workbench start, Workbench end, List<Vector2> path) {
         this.controller = controller;
         this.start = start;
         this.end = end;
+        this.path = path;
         this.itemType = start.getType();
         int sellPrice = PriceHelper.getSellPrice(start.getType());
         int buyPrice = PriceHelper.getBuyPrice(start.getType());
@@ -75,6 +80,10 @@ public class Scheme {
                     return true;
         }
         return false;
+    }
+
+    public List<Vector2> getPath() {
+        return path;
     }
 
     public double getAverageProfit(Robot robot) {

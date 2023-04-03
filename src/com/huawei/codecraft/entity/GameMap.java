@@ -1,16 +1,13 @@
 package com.huawei.codecraft.entity;
 
-import java.io.FileWriter;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.MathHelper;
-import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
 
 public class GameMap {
@@ -19,66 +16,114 @@ public class GameMap {
     public static final int EMPTY = 0;
 
     private int[][] grids = new int[100][100];
-    private List<Vector2> obstacles = new LinkedList<>();
+    private int[][] map1 = new int[100][100];
+    private int[][] map2 = new int[100][100];
+    private final Vector2[] obstacles;
 
     public GameMap(int[][] grids) {
+        List<Vector2> obs = new LinkedList<>();
         for (int x = 0; x < 100; ++x) {
             for (int y = 0; y < 100; ++y) {
                 this.grids[x][y] = grids[99 - y][x];
                 if (this.grids[x][y] == OBSTACLE) {
-                    obstacles.add(new Vector2(x / 2.0 + 2.5, y / 2.0 + 2.5));
+                    obs.add(new Vector2(x / 2.0 + 2.5, y / 2.0 + 2.5));
                 }
+            }
+        }
+        obstacles = obs.toArray(Vector2[]::new);
+        for (int x = 0; x < 100; ++x) {
+            for (int y = 0; y < 100; ++y) {
+                boolean u = false, d = false, l = false, r = false;
+                // gen map 1
+                if (safeGet(x, y) != OBSTACLE)
+                    for (int i = -1; i <= 1; i++) {
+                        for (int j = -1; j <= 1; j++) {
+                            if (safeGet(x + i, y + j) == OBSTACLE) {
+                                if (i < 0)
+                                    l = true;
+                                else if (i > 0)
+                                    r = true;
+                                if (j < 0)
+                                    d = true;
+                                else if (j > 0)
+                                    u = true;
+                            }
+                        }
+                    }
+                map1[x][y] = (u && d || l && r) ? OBSTACLE : grids[x][y];
             }
         }
     }
 
-    public int get(int x, int y) {
+    public void safeSet(int x, int y, int v) {
+        if (x < 0 || x >= 100 || y < 0 || y >= 100)
+            return;
+        grids[x][y] = v;
+    }
+
+    public int safeGet(int x, int y) {
+        if (x < 0 || x >= 100 || y < 0 || y >= 100)
+            return OBSTACLE;
         return grids[x][y];
     }
 
-    public List<Vector2> getObstacles() {
+    public Vector2[] getObstacles() {
         return obstacles;
     }
 
+    // TODO: 有问题不能使用
     /**
      * 寻找网格上的两点的直线是否存在障碍物
      * 
      * @return {@code true} 如果存在障碍物
      */
-    public boolean hasObstacle(int x1, int y1, int x2, int y2) { // TODO: 有问题不能使用
-        int dx = Math.abs(x2 - x1);
-        int dy = Math.abs(y2 - y1);
+    public boolean hasObstacle(int x1, int y1, int x2, int y2) {
         int x = x1;
         int y = y1;
-        int k = dy > dx ? dx * 2 : dy * 2;
-        int e = k - (dy > dx ? dx : dy);
-        int incX = x2 > x1 ? 1 : -1;
-        int incY = y2 > y1 ? 1 : -1;
-        for (int i = 0; i < k; i++) {
-            if (grids[x][y] == OBSTACLE) {
-                return false;
-            }
-            if (e > 0) {
-                if (dy > dx) {
-                    y += incY;
-                } else {
-                    x += incX;
+
+        int w = x2 - x1;
+        int h = y2 - y1;
+
+        int dx1 = w < 0 ? -1 : (w > 0 ? 1 : 0);
+        int dy1 = h < 0 ? -1 : (h > 0 ? 1 : 0);
+
+        int dx2 = w < 0 ? -1 : (w > 0 ? 1 : 0);
+        int dy2 = 0;
+
+        int fastStep = Math.abs(w);
+        int slowStep = Math.abs(h);
+        if (fastStep <= slowStep) {
+            fastStep = Math.abs(h);
+            slowStep = Math.abs(w);
+
+            dx2 = 0;
+            dy2 = h < 0 ? -1 : (h > 0 ? 1 : 0);
+        }
+        int numerator = fastStep >> 1;
+
+        for (int i = 0; i <= fastStep; i++) {
+            for (int xOffset = -1; xOffset <= 1; ++xOffset) {
+                int x_ = x + xOffset;
+                for (int yOffset = -1; yOffset <= 1; ++yOffset) {
+                    int y_ = y + yOffset;
+                    if (x_ < 0 || x_ > 99 || y_ < 0 || y_ > 99)
+                        continue;
+                    if (grids[x_][y_] == OBSTACLE)
+                        return true;
                 }
-                e -= 2 * (dy > dx ? dx : dy);
             }
-            if (dy > dx) {
-                x += incX;
+            numerator += slowStep;
+            if (numerator >= fastStep) {
+                numerator -= fastStep;
+                x += dx1;
+                y += dy1;
             } else {
-                y += incY;
-            }
-            e += 2 * (dy > dx ? dy : dx);
-            if (x == x2 && y == y2) {
-                return true;
+                x += dx2;
+                y += dy2;
             }
         }
         return false;
     }
-    
 
     private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
         return hasObstacle(node1.x, node1.y, node2.x, node2.y);
@@ -90,50 +135,48 @@ public class GameMap {
      * @param from 起始点坐标
      * @param to   终点坐标
      */
-    public List<Vector2> findPath(Vector2 from, Vector2 to) {
+    public List<Vector2> findPath(Vector2 from, Vector2 to, boolean strict) {
         int[] start = toGridPos(from);
         int[] end = toGridPos(to);
 
-        Set<GameMapNode> visited = new HashSet<>();
+        Map<GameMapNode, GameMapNode> visited = new HashMap<>();
         PriorityQueue<GameMapNode> visiting = new PriorityQueue<>();
         GameMapNode beginNode = GameMapNode.makeStartNode(start, end);
         visiting.add(beginNode);
-        visited.add(beginNode);
+        visited.put(beginNode, beginNode);
 
         GameMapNode endNode = null;
 
-        while (visiting.size() > 0) {
+        boolean foundEnd = false;
+        while (!foundEnd && visiting.size() > 0) {
             // choose best node
             GameMapNode choice = visiting.poll();
-
-            if (choice.x == end[0] && choice.y == end[1]) {
-                // arrive
-                endNode = choice;
-                break;
-            }
 
             // 8 dir expand
             for (int i = -1; i <= 1; ++i) {
                 for (int j = -1; j <= 1; ++j) {
                     if (i == 0 && j == 0)
                         continue;
-                    GameMapNode move = choice.makeMove(grids, i, j, end);
+                    GameMapNode move = choice.makeMove(strict ? map2 : map1, i, j, end);
                     if (move != null) {
-                        if (visited.add(move)) {
+                        if (move.x == end[0] && move.y == end[1]) {
+                            foundEnd = true;
+                            endNode = move;
+                            break;
+                        }
+                        if (!visited.containsKey(move)) {
+                            // new visiting
+                            visited.put(move, move);
                             visiting.add(move);
                         } else {
                             // update the G value
-                            Iterator<GameMapNode> it = visited.iterator();
-                            while (it.hasNext()) {
-                                GameMapNode theMove = it.next();
-                                if (move.equals(theMove)) {
-                                    theMove.tryUpdateByPrevious(grids, choice);
-                                    break;
-                                }
-                            }
+                            GameMapNode theMove = visited.get(move);
+                            theMove.tryUpdateByPrevious(strict ? map2 : map1, choice);
                         }
                     }
                 }
+                if (foundEnd)
+                    break;
             }
         }
 
@@ -175,16 +218,18 @@ public class GameMap {
     private List<Vector2> smoothPath(List<GameMapNode> path) {
         // Iterator<GameMapNode> it = path.iterator();
         // GameMapNode current = it.next();
-        // while (it.hasNext()) {
-        //     GameMapNode next = it.next();
-        //     // if (!hasObstacle(current, next)) {
-        //     if (current.x == next.x || current.y == next.y) {
-        //         // 移除多余的顶点
-        //         it.remove();
-        //     } else {
-        //         // 从新的顶点开始计算
-        //         current = next;
-        //     }
+        // while (true) {
+        // GameMapNode next = it.next();
+        // if (!it.hasNext())
+        // break;
+        // // if (current.x == next.x || current.y == next.y) {
+        // if (!hasObstacle(current, next)) {
+        // // 移除多余的顶点
+        // it.remove();
+        // } else {
+        // // 从新的顶点开始计算
+        // current = next;
+        // }
         // }
         return path.stream()
                 .map(x -> x.getPos())
