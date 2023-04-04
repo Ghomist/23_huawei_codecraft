@@ -1,5 +1,6 @@
 package com.huawei.codecraft.entity;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,12 +41,16 @@ public class GameMap {
         Set<Vector2Int> visited = new HashSet<>();
         for (Workbench bench : benches) {
             int id = bench.id;
+            for (double[] line : dist[id]) {
+                Arrays.fill(line, Double.MAX_VALUE);
+            }
             // do bfs
             Vector2Int start = bench.getPos().toGrid();
             list.clear();
             list.add(start);
             visited.clear();
             visited.add(start);
+            dist[id][start.x][start.y] = 0;
             while (list.size() > 0) {
                 Vector2Int node = list.removeFirst();
                 for (int i = -1; i <= 1; ++i) {
@@ -71,7 +76,8 @@ public class GameMap {
 
     /**
      * 根据距离场，极速获取任意一点到工作台的距离（寻路距离）
-     * @param pos 任意点的坐标
+     * 
+     * @param pos     任意点的坐标
      * @param benchID 工作台的 id
      * @return 寻路格点距离
      */
@@ -82,6 +88,7 @@ public class GameMap {
 
     /**
      * 寻找网格上的两点的直线是否存在障碍物
+     * 
      * @return {@code true} 如果存在障碍物
      */
     public boolean hasObstacle(int x1, int y1, int x2, int y2) {
