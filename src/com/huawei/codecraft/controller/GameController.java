@@ -72,7 +72,7 @@ public class GameController {
             x++;
         }
         benches = benchList.toArray(new Workbench[benchList.size()]);
-        map = new GameMap(grids);
+        map = new GameMap(grids, benches);
         start();
         running = true;
         Output.ok();

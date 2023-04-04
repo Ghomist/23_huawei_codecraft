@@ -1,15 +1,17 @@
 package com.huawei.codecraft.entity;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.ArrayHelper;
-import com.huawei.codecraft.helper.MathHelper;
 import com.huawei.codecraft.math.Vector2;
+import com.huawei.codecraft.math.Vector2Int;
 
 public class GameMap {
 
@@ -17,41 +19,48 @@ public class GameMap {
     public static final int EMPTY = 0;
 
     private int[][] grid = new int[100][100];
+    private double[][][] dist; // 距离场
     private final Vector2[] obstacles;
 
-    public GameMap(int[][] grid) {
-        int[][] tmp = new int[100][100];
+    public GameMap(int[][] grid, Workbench[] benches) {
         List<Vector2> obs = new LinkedList<>();
 
         for (int x = 0; x < 100; ++x) {
             for (int y = 0; y < 100; ++y) {
-                tmp[x][y] = grid[99 - y][x];
-                if (tmp[x][y] == OBSTACLE) {
+                this.grid[x][y] = grid[99 - y][x];
+                if (this.grid[x][y] == OBSTACLE) {
                     obs.add(new Vector2(x / 2.0 + 2.5, y / 2.0 + 2.5));
                 }
             }
         }
         obstacles = obs.toArray(new Vector2[obs.size()]);
 
-        for (int x = 0; x < 100; ++x) {
-            for (int y = 0; y < 100; ++y) {
-                int side = 0;
-                int corner = 0;
-                // gen default map
-                if (ArrayHelper.safeGet(tmp, x, y, OBSTACLE) != OBSTACLE)
-                    for (int i = -1; i <= 1; ++i) {
-                        for (int j = -1; j <= 1; ++j) {
-                            if (ArrayHelper.safeGet(tmp, x + i, y + j, OBSTACLE) == OBSTACLE) {
-                                if (i == 0 || j == 0) {
-                                    side++;
-                                } else {
-                                    corner++;
-                                }
-                            }
+        dist = new double[benches.length][100][100];
+        LinkedList<Vector2Int> list = new LinkedList<>();
+        Set<Vector2Int> visited = new HashSet<>();
+        for (Workbench bench : benches) {
+            int id = bench.id;
+            // do bfs
+            Vector2Int start = bench.getPos().toGrid();
+            list.clear();
+            list.add(start);
+            visited.clear();
+            visited.add(start);
+            while (list.size() > 0) {
+                Vector2Int node = list.removeFirst();
+                for (int i = -1; i <= 1; ++i) {
+                    for (int j = -1; j <= 1; ++j) {
+                        Vector2Int move = node.offset(i, j);
+                        if (ArrayHelper.safeGet(this.grid, move.x, move.y, OBSTACLE) == OBSTACLE)
+                            continue;
+                        if (visited.add(move)) {
+                            double moveDist = move.x == node.x || move.y == node.y ? 1 : 1.414;
+                            dist[id][move.x][move.y] = dist[id][node.x][node.y] + moveDist;
+                            list.addLast(move);
                         }
                     }
-                // TODO: 细化不可能情况（这个不急）
-                this.grid[x][y] = (side >= 2 || side + corner >= 4) ? OBSTACLE : tmp[x][y];
+                }
+
             }
         }
     }
@@ -61,8 +70,18 @@ public class GameMap {
     }
 
     /**
+     * 根据距离场，极速获取任意一点到工作台的距离（寻路距离）
+     * @param pos 任意点的坐标
+     * @param benchID 工作台的 id
+     * @return 寻路格点距离
+     */
+    public double getDistToWorkbench(Vector2 pos, int benchID) {
+        Vector2Int grid = pos.toGrid();
+        return dist[benchID][grid.x][grid.y];
+    }
+
+    /**
      * 寻找网格上的两点的直线是否存在障碍物
-     * 
      * @return {@code true} 如果存在障碍物
      */
     public boolean hasObstacle(int x1, int y1, int x2, int y2) {
@@ -94,9 +113,7 @@ public class GameMap {
                 int x_ = x + xOffset;
                 for (int yOffset = -1; yOffset <= 1; ++yOffset) {
                     int y_ = y + yOffset;
-                    if (x_ < 0 || x_ > 99 || y_ < 0 || y_ > 99)
-                        continue;
-                    if (grid[x_][y_] == OBSTACLE)
+                    if (ArrayHelper.safeGet(grid, x_, y_, OBSTACLE) == OBSTACLE)
                         return true;
                 }
             }
@@ -120,13 +137,13 @@ public class GameMap {
     /**
      * 正常地图的 A* 寻路
      * 
-     * @param from 起始点坐标
-     * @param to 终点坐标
+     * @param from   起始点坐标
+     * @param to     终点坐标
      * @param strict 机器人拿东西的时候寻路应使用严格模式
      */
     public List<Vector2> findPath(Vector2 from, Vector2 to, boolean strict) {
-        int[] start = toGridPos(from);
-        int[] end = toGridPos(to);
+        Vector2Int start = from.toGrid();
+        Vector2Int end = to.toGrid();
 
         Map<GameMapNode, GameMapNode> visited = new HashMap<>();
         PriorityQueue<GameMapNode> visiting = new PriorityQueue<>();
@@ -148,7 +165,7 @@ public class GameMap {
                         continue;
                     GameMapNode move = choice.makeMove(grid, i, j, end, strict);
                     if (move != null) {
-                        if (move.x == end[0] && move.y == end[1]) {
+                        if (move.x == end.x && move.y == end.y) {
                             foundEnd = true;
                             endNode = move;
                             break;
@@ -228,12 +245,5 @@ public class GameMap {
         return path.stream()
                 .map(x -> x.getPos())
                 .collect(Collectors.toList());
-    }
-
-    private int[] toGridPos(Vector2 pos) { // TODO: to be confirmed
-        int[] ret = new int[2];
-        ret[0] = MathHelper.round(pos.x * 2);
-        ret[1] = MathHelper.round(pos.y * 2);
-        return ret;
     }
 }

@@ -60,7 +60,8 @@ public class Main {
         // for (int i = 0; i < 4; ++i) {
         // robots[i] = new Robot();
         // }
-        GameMap map = new GameMap(grids);
+
+        GameMap map = new GameMap(grids, benches.toArray(new Workbench[benches.size()]));
         map.findPath(new Vector2(1, 49), new Vector2(25, 49), false);
 
         // System.out.println("Hello Debug...");

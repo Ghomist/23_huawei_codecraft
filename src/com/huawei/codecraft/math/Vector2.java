@@ -1,5 +1,7 @@
 package com.huawei.codecraft.math;
 
+import com.huawei.codecraft.helper.MathHelper;
+
 public class Vector2 {
     public static final Vector2 ZERO = new Vector2();
     public static final Vector2 UP = new Vector2(0, 1);
@@ -72,6 +74,10 @@ public class Vector2 {
 
     public Vector2 copy() {
         return new Vector2(x, y);
+    }
+
+    public Vector2Int toGrid() {
+        return new Vector2Int(MathHelper.round(x * 2), MathHelper.round(y * 2));
     }
 
     public static Vector2 getPosFromGridIndex(int x, int y) {
