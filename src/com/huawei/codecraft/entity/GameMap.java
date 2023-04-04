@@ -3,13 +3,11 @@ package com.huawei.codecraft.entity;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.ArrayHelper;
@@ -43,7 +41,7 @@ public class GameMap {
             for (int y = 0; y < 100; ++y) {
                 this.grid[x][y] = grid[99 - y][x];
                 if (this.grid[x][y] == OBSTACLE) {
-                    obs.add(new Vector2(x / 2.0 + 2.5, y / 2.0 + 2.5));
+                    obs.add(new Vector2(x / 2.0 + 0.25, y / 2.0 + 0.25));
                 }
             }
         }
@@ -105,7 +103,7 @@ public class GameMap {
      * 
      * @param pos  出发点位置
      * @param type 需要的工作台类型（注意是用二进制位来表示的）
-     *             比如{@code GameMap.B123}实际值是{@code 0b0111}，表示需要第1、2、3号的工作台，示例：
+     *             比如{@code GameMap.B123}实际值是{@code 0b1110}，表示需要第1、2、3号的工作台，示例：
      *             {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
      * @return 工作台的id
      */
