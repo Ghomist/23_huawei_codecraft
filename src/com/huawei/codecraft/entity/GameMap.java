@@ -26,6 +26,8 @@ public class GameMap {
     public static final int B8 = 0b100000000;
     public static final int B9 = 0b1000000000;
 
+    private static final boolean USE_SMOOTH_PATH = false;
+
     private int[][] grid = new int[100][100];
     private double[][][] dist; // 距离场
     private final Vector2[] obstacles;
@@ -284,7 +286,23 @@ public class GameMap {
         // }
         // }
         return path.stream()
-                .map(x -> x.getPos())
+                .map(p -> {
+                    if (USE_SMOOTH_PATH) {
+                        if (ArrayHelper.safeGet(grid, p.x + 1, p.y, OBSTACLE) == OBSTACLE) {
+                            return p.getPos().add(new Vector2(-0.25, 0));
+                        } else if (ArrayHelper.safeGet(grid, p.x - 1, p.y, OBSTACLE) == OBSTACLE) {
+                            return p.getPos().add(new Vector2(0.25, 0));
+                        } else if (ArrayHelper.safeGet(grid, p.x, p.y + 1, OBSTACLE) == OBSTACLE) {
+                            return p.getPos().add(new Vector2(0, -0.25));
+                        } else if (ArrayHelper.safeGet(grid, p.x, p.y - 1, OBSTACLE) == OBSTACLE) {
+                            return p.getPos().add(new Vector2(0, 0.25));
+                        } else {
+                            return p.getPos();
+                        }
+                    } else {
+                        return p.getPos();
+                    }
+                })
                 .collect(Collectors.toList());
     }
 }
