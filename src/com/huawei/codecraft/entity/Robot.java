@@ -25,9 +25,9 @@ public class Robot {
     public static final double BENCH_TEST_DIST = 0.4;
 
     // Dist-to-Stop params
-    public static final double DIST_ARRIVE = 0.39; // go to next target
-    public static final double DIST_SLOW_DOWN = 0.6; // set speed down
-    public static final double DIST_STOP = 0.3; // set speed to 0
+    public static final double DIST_ARRIVE = 0.35; // go to next target
+    public static final double DIST_SLOW_DOWN = 0.8; // set speed down
+    public static final double DIST_STOP = 0.35; // set speed to 0
 
     // RVO2 params
     public static final boolean USE_RVO2 = true; // most priority
@@ -107,8 +107,12 @@ public class Robot {
         final double diff = RadianHelper.diff(dir, prefVelocity.radian());
 
         // lead current velocity to pref velocity
-        final double speedK = Math.cos(Math.abs(diff));
-        setForwardSpeed(speedK * prefVelocity.length());
+        if (Math.abs(diff) < Math.PI / 8) {
+            final double speedK = Math.cos(Math.abs(diff));
+            setForwardSpeed(speedK * prefVelocity.length());
+        } else {
+            setForwardSpeed(0);
+        }
 
         // rotate to pref velocity
         setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);

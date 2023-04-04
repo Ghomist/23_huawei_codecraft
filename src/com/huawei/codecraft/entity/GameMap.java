@@ -3,11 +3,13 @@ package com.huawei.codecraft.entity;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.ArrayHelper;
@@ -174,7 +176,17 @@ public class GameMap {
     }
 
     private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
-        return hasObstacle(node1.x, node1.y, node2.x, node2.y);
+        int dx = node1.x < node2.x ? 1 : -1;
+        int dy = node1.y < node2.y ? 1 : -1;
+        for (int x = node1.x; x != node2.x + dx; x += dx) {
+            for (int y = node1.y; y != node2.y + dy; y += dy) {
+                if (ArrayHelper.safeGet(grid, x, y, OBSTACLE) == OBSTACLE) {
+                    return true;
+                }
+            }
+        }
+        return false;
+        // return hasObstacle(node1.x, node1.y, node2.x, node2.y);
     }
 
     /**
@@ -205,6 +217,8 @@ public class GameMap {
             for (int i = -1; i <= 1; ++i) {
                 for (int j = -1; j <= 1; ++j) {
                     if (i == 0 && j == 0)
+                        continue;
+                    if (i != 0 && j != 0) // 四向寻路
                         continue;
                     GameMapNode move = choice.makeMove(grid, i, j, end, strict);
                     if (move != null) {
@@ -266,43 +280,60 @@ public class GameMap {
 
     private List<Vector2> smoothPath(List<GameMapNode> path) {
         // TODO: 路径平滑（不急）
-        // GameMapNode[] pathArr = path.toArray(new GameMapNode[path.size()]);
-        // for (int i = 1; i < pathArr.length - 1; ++i) {
 
-        // }
-        // Iterator<GameMapNode> it = path.iterator();
-        // GameMapNode current = it.next();
-        // while (true) {
-        // GameMapNode next = it.next();
-        // if (!it.hasNext())
-        // break;
-        // // if (current.x == next.x || current.y == next.y) {
-        // if (!hasObstacle(current, next)) {
-        // // 移除多余的顶点
-        // it.remove();
-        // } else {
-        // // 从新的顶点开始计算
-        // current = next;
-        // }
-        // }
+        // 消除长直线
+        GameMapNode[] pathArr = path.toArray(new GameMapNode[path.size()]);
+        path.clear();
+        path.add(pathArr[0]);
+        for (int i = 1; i < pathArr.length - 1; ++i) {
+            GameMapNode last = pathArr[i - 1];
+            GameMapNode crt = pathArr[i];
+            GameMapNode nxt = pathArr[i + 1];
+            boolean canRemove = last.x == crt.x && nxt.x == crt.x || last.y == crt.y && nxt.y == crt.y;
+            if (!canRemove) {
+                path.add(crt);
+            }
+        }
+        path.add(pathArr[pathArr.length - 1]);
+
+        // 消除拐角
+        pathArr = path.toArray(new GameMapNode[path.size()]);
+        path.clear();
+        path.add(pathArr[0]);
+        int start = 0;
+        for (int i = 1; i < pathArr.length - 1; ++i) {
+            GameMapNode crt = pathArr[i];
+            GameMapNode nxt = pathArr[i + 1];
+            boolean canRemove = !hasObstacle(pathArr[start], nxt);
+            if (!canRemove) {
+                path.add(crt);
+                start = i;
+            }
+        }
+        path.add(pathArr[pathArr.length - 1]);
+
         return path.stream()
-                .map(p -> {
-                    if (USE_SMOOTH_PATH) {
-                        if (ArrayHelper.safeGet(grid, p.x + 1, p.y, OBSTACLE) == OBSTACLE) {
-                            return p.getPos().add(new Vector2(-0.25, 0));
-                        } else if (ArrayHelper.safeGet(grid, p.x - 1, p.y, OBSTACLE) == OBSTACLE) {
-                            return p.getPos().add(new Vector2(0.25, 0));
-                        } else if (ArrayHelper.safeGet(grid, p.x, p.y + 1, OBSTACLE) == OBSTACLE) {
-                            return p.getPos().add(new Vector2(0, -0.25));
-                        } else if (ArrayHelper.safeGet(grid, p.x, p.y - 1, OBSTACLE) == OBSTACLE) {
-                            return p.getPos().add(new Vector2(0, 0.25));
-                        } else {
-                            return p.getPos();
-                        }
-                    } else {
-                        return p.getPos();
-                    }
-                })
+                .map(x -> x.getPos())
                 .collect(Collectors.toList());
+
+        // return path.stream()
+        // .map(p -> {
+        // if (USE_SMOOTH_PATH) {
+        // if (ArrayHelper.safeGet(grid, p.x + 1, p.y, OBSTACLE) == OBSTACLE) {
+        // return p.getPos().add(new Vector2(-0.25, 0));
+        // } else if (ArrayHelper.safeGet(grid, p.x - 1, p.y, OBSTACLE) == OBSTACLE) {
+        // return p.getPos().add(new Vector2(0.25, 0));
+        // } else if (ArrayHelper.safeGet(grid, p.x, p.y + 1, OBSTACLE) == OBSTACLE) {
+        // return p.getPos().add(new Vector2(0, -0.25));
+        // } else if (ArrayHelper.safeGet(grid, p.x, p.y - 1, OBSTACLE) == OBSTACLE) {
+        // return p.getPos().add(new Vector2(0, 0.25));
+        // } else {
+        // return p.getPos();
+        // }
+        // } else {
+        // return p.getPos();
+        // }
+        // })
+        // .collect(Collectors.toList());
     }
 }
