@@ -26,7 +26,7 @@ public class Robot {
 
     // Dist-to-Stop params
     public static final double DIST_ARRIVE = 0.35; // go to next target
-    public static final double DIST_SLOW_DOWN = 0.8; // set speed down
+    public static final double DIST_SLOW_DOWN = 1.0; // set speed down
     public static final double DIST_STOP = 0.35; // set speed to 0
 
     // RVO2 params
@@ -39,7 +39,7 @@ public class Robot {
     public static final double RVO2_ADJUST_RATE_HIGH = 1.6;
     public static final double RVO2_ADJUST_RATE_LOW = 1.3;
     public static final double RVO2_ADJUST_RATE_WALL = 1.45;
-    public static final boolean RVO2_AVOID_WALL = false;
+    public static final boolean RVO2_AVOID_WALL = true;
     public static final boolean RVO2_AVOID_EDGE = true;
 
     public int id;
@@ -107,7 +107,7 @@ public class Robot {
         final double diff = RadianHelper.diff(dir, prefVelocity.radian());
 
         // lead current velocity to pref velocity
-        if (Math.abs(diff) < Math.PI / 8) {
+        if (Math.abs(diff) < Math.PI / 7) {
             final double speedK = Math.cos(Math.abs(diff));
             setForwardSpeed(speedK * prefVelocity.length());
         } else {
@@ -163,7 +163,7 @@ public class Robot {
                 prefSpeed = 0;
             } else if (distToTarget < DIST_SLOW_DOWN) {
                 // slow down
-                prefSpeed = MAX_FORWARD_SPEED * distToTarget;
+                prefSpeed = MAX_FORWARD_SPEED * (distToTarget / DIST_SLOW_DOWN);
             } else {
                 // full speed forward
                 prefSpeed = MAX_FORWARD_SPEED;
@@ -230,13 +230,13 @@ public class Robot {
         // detect obstacles (recognize wall as circle)
         if (RVO2_AVOID_WALL)
             for (Vector2 obsPos : obstacles) {
-                if (Vector2.distance(pos, obsPos) > RVO2_AVOID_DIST)
+                if (Vector2.distance(pos, obsPos) > RVO2_AVOID_DIST / 7)
                     continue;
 
                 final Vector2 relativePosition = obsPos.subtract(pos);
                 final Vector2 relativeVelocity = getLineSpeed();
                 final double dist2 = relativePosition.length2();
-                final double rr = getRadius() + 0.25;
+                final double rr = getRadius();
                 final double rr2 = rr * rr;
 
                 // 在三角锥的外面
@@ -304,12 +304,14 @@ public class Robot {
                     u = unitW.multiply(rr * invTimeStep - wLength);
                 }
 
-                final Vector2 point = getLineSpeed().add(1, u);
+                final Vector2 point = getLineSpeed().add(0.6, u);
                 // lines.add(new HalfPlane(new Line(point, direction), u));
-                planes.add(new HalfPlane(new Line(point, direction), u));
+                // planes.add(new HalfPlane(new Line(point, direction), u));
 
-                finalU = finalU.add(1, u);
+                finalU = finalU.add(0.5, u);
             }
+        prefVelocity = prefVelocity.add(finalU);
+        finalU = Vector2.ZERO;
 
         // detect other robots
         for (Robot other : robots) {
