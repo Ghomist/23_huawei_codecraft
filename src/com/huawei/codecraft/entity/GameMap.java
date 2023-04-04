@@ -28,7 +28,7 @@ public class GameMap {
     public static final int B8 = 0b100000000;
     public static final int B9 = 0b1000000000;
 
-    private static final boolean USE_SMOOTH_PATH = false;
+    private static final double PATH_ADJUST = 0.25;
 
     private int[][] grid = new int[100][100];
     private double[][][] dist; // 距离场
@@ -78,9 +78,10 @@ public class GameMap {
                         }
                     }
                 }
-
             }
         }
+
+        // TODO: 剔除不可能工作台
     }
 
     public Vector2[] getObstacles() {
@@ -129,6 +130,7 @@ public class GameMap {
      * 
      * @return {@code true} 如果存在障碍物
      */
+    @Deprecated
     public boolean hasObstacle(int x1, int y1, int x2, int y2) {
         int x = x1;
         int y = y1;
@@ -176,6 +178,7 @@ public class GameMap {
     }
 
     private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
+        // TODO: 优化
         int dx = node1.x < node2.x ? 1 : -1;
         int dy = node1.y < node2.y ? 1 : -1;
         for (int x = node1.x; x != node2.x + dx; x += dx) {
@@ -252,25 +255,6 @@ public class GameMap {
                 endNode = endNode.pre;
             }
 
-            // for (var a : ans) {
-            // grids[a.x][a.y] = 10;
-            // }
-
-            // try (FileWriter fw = new FileWriter("aaaaa.txt")) {
-            // for (var a : grids) {
-            // for (var b : a) {
-            // char c = ' ';
-            // if (b == -1)
-            // c = '#';
-            // else if (b == 10)
-            // c = 'X';
-            // fw.append(c);
-            // }
-            // fw.append('\n');
-            // }
-            // } catch (Exception e) {
-            // }
-
             return smoothPath(ans);
         } else {
             // no path
@@ -279,8 +263,6 @@ public class GameMap {
     }
 
     private List<Vector2> smoothPath(List<GameMapNode> path) {
-        // TODO: 路径平滑（不急）
-
         // 消除长直线
         GameMapNode[] pathArr = path.toArray(new GameMapNode[path.size()]);
         path.clear();
@@ -312,28 +294,24 @@ public class GameMap {
         }
         path.add(pathArr[pathArr.length - 1]);
 
-        return path.stream()
-                .map(x -> x.getPos())
-                .collect(Collectors.toList());
-
         // return path.stream()
-        // .map(p -> {
-        // if (USE_SMOOTH_PATH) {
-        // if (ArrayHelper.safeGet(grid, p.x + 1, p.y, OBSTACLE) == OBSTACLE) {
-        // return p.getPos().add(new Vector2(-0.25, 0));
-        // } else if (ArrayHelper.safeGet(grid, p.x - 1, p.y, OBSTACLE) == OBSTACLE) {
-        // return p.getPos().add(new Vector2(0.25, 0));
-        // } else if (ArrayHelper.safeGet(grid, p.x, p.y + 1, OBSTACLE) == OBSTACLE) {
-        // return p.getPos().add(new Vector2(0, -0.25));
-        // } else if (ArrayHelper.safeGet(grid, p.x, p.y - 1, OBSTACLE) == OBSTACLE) {
-        // return p.getPos().add(new Vector2(0, 0.25));
-        // } else {
-        // return p.getPos();
-        // }
-        // } else {
-        // return p.getPos();
-        // }
-        // })
+        // .map(x -> x.getPos())
         // .collect(Collectors.toList());
+
+        return path.stream()
+                .map(p -> {
+                    if (ArrayHelper.safeGet(grid, p.x + 1, p.y, OBSTACLE) == OBSTACLE) {
+                        return p.getPos().add(new Vector2(-PATH_ADJUST, 0));
+                    } else if (ArrayHelper.safeGet(grid, p.x - 1, p.y, OBSTACLE) == OBSTACLE) {
+                        return p.getPos().add(new Vector2(PATH_ADJUST, 0));
+                    } else if (ArrayHelper.safeGet(grid, p.x, p.y + 1, OBSTACLE) == OBSTACLE) {
+                        return p.getPos().add(new Vector2(0, -PATH_ADJUST));
+                    } else if (ArrayHelper.safeGet(grid, p.x, p.y - 1, OBSTACLE) == OBSTACLE) {
+                        return p.getPos().add(new Vector2(0, PATH_ADJUST));
+                    } else {
+                        return p.getPos();
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -139,7 +139,8 @@ public class Robot {
         // TODO: 初始化（下面只是示例）
         int targetID = map.getClosestWorkbench(pos, GameMap.B123);
         List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), false);
-        addTargets(path);
+        if (path != null)
+            addTargets(path);
     }
 
     private void selfSchedule(GameMap map, Workbench[] benches) {
@@ -235,7 +236,7 @@ public class Robot {
                 final Vector2 relativePosition = obsPos.subtract(pos);
                 final Vector2 relativeVelocity = getLineSpeed();
                 final double dist2 = relativePosition.length2();
-                final double rr = getRadius() + 0.25 * Math.sqrt(2);
+                final double rr = getRadius() + 0.25;
                 final double rr2 = rr * rr;
 
                 // 在三角锥的外面
