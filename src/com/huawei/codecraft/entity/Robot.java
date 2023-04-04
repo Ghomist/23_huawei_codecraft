@@ -71,10 +71,6 @@ public class Robot {
         this.v = Vector2.ZERO;
     }
 
-    public void start(Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
-        // TODO: 初始化
-    }
-
     public void update(int id, String info) {
         this.id = id;
 
@@ -97,10 +93,10 @@ public class Robot {
         cmdList.clear();
     }
 
-    public void schedule(Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
+    public void schedule(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
         // self schedule
-        selfSchedule(benches);
-        
+        selfSchedule(map, benches);
+
         // generate pref velocity according to target
         genPrefVelocity();
 
@@ -122,6 +118,11 @@ public class Robot {
         targets.removeFirst();
     }
 
+    public void resetTargets(List<Vector2> list) {
+        this.targets.clear();
+        this.targets.addAll(list);
+    }
+
     public void addTargets(List<Vector2> list) {
         this.targets.addAll(list);
     }
@@ -130,7 +131,14 @@ public class Robot {
         targets.add(pos);
     }
 
-    private void selfSchedule(Workbench[] benches) {
+    public void start(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
+        // TODO: 初始化（下面只是示例）
+        int targetID = map.getClosestWorkbench(pos, GameMap.B123);
+        List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), false);
+        addTargets(path);
+    }
+
+    private void selfSchedule(GameMap map, Workbench[] benches) {
         // TODO: 决策
     }
 
@@ -163,26 +171,6 @@ public class Robot {
             if (distToTarget < DIST_ARRIVE) {
                 finishTarget();
             }
-
-            // if (isAtWorkbench()) {
-            // if (target.bench == null) {
-            // // if (dist < BENCH_TEST_DIST / 2)
-            // finishTarget();
-            // } else {
-            // if (getAtWorkbenchID() == target.bench.id) {
-            // if (hasItem()) {
-            // sell();
-            // finishTarget();
-            // scheme.finish();
-            // scheme = null;
-            // } else if (target.bench.hasProduction()) {
-            // buy();
-            // scheme.onSending();
-            // finishTarget();
-            // }
-            // }
-            // }
-            // }
         } else {
             // no target, stop and wait
             prefVelocity = Vector2.ZERO;

@@ -13,17 +13,26 @@ import java.util.stream.Collectors;
 import com.huawei.codecraft.helper.ArrayHelper;
 import com.huawei.codecraft.math.Vector2;
 import com.huawei.codecraft.math.Vector2Int;
+import com.huawei.codecraft.util.BitCalculator;
 
 public class GameMap {
 
     public static final int OBSTACLE = -1;
     public static final int EMPTY = 0;
 
+    public static final int B123 = 0b1110;
+    public static final int B456 = 0b1110000;
+    public static final int B7 = 0b10000000;
+    public static final int B8 = 0b100000000;
+    public static final int B9 = 0b1000000000;
+
     private int[][] grid = new int[100][100];
     private double[][][] dist; // 距离场
     private final Vector2[] obstacles;
+    private final Workbench[] benches;
 
     public GameMap(int[][] grid, Workbench[] benches) {
+        this.benches = benches;
         List<Vector2> obs = new LinkedList<>();
 
         for (int x = 0; x < 100; ++x) {
@@ -84,6 +93,31 @@ public class GameMap {
     public double getDistToWorkbench(Vector2 pos, int benchID) {
         Vector2Int grid = pos.toGrid();
         return dist[benchID][grid.x][grid.y];
+    }
+
+    /**
+     * 获取最近的工作台
+     * 
+     * @param pos  出发点位置
+     * @param type 需要的工作台类型（注意是用二进制位来表示的）
+     *             比如{@code GameMap.B123}实际值是{@code 0b0111}，表示需要第1、2、3号的工作台，示例：
+     *             {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
+     * @return 工作台的id
+     */
+    public int getClosestWorkbench(Vector2 pos, int type) {
+        Vector2Int p = pos.toGrid();
+        double minDist = Double.MAX_VALUE;
+        int minID = 0;
+        for (int id = 0; id < dist.length; ++id) {
+            if (BitCalculator.isOne(type, benches[id].getType())) {// 是需要的类型
+                double d = dist[id][p.x][p.y];
+                if (d < minDist) {
+                    minDist = d;
+                    minID = id;
+                }
+            }
+        }
+        return minID;
     }
 
     /**

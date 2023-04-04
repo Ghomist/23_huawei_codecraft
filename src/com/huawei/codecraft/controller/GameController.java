@@ -83,7 +83,7 @@ public class GameController {
             update();
             schedule();
             for (Robot robot : robots) {
-                robot.schedule(robots, benches, map.getObstacles());
+                robot.schedule(map, robots, benches, map.getObstacles());
             }
             sendCommands();
         }
@@ -95,7 +95,7 @@ public class GameController {
 
     private void start() {
         for (Robot robot : robots) {
-            robot.start(robots, benches, map.getObstacles());
+            robot.start(map, robots, benches, map.getObstacles());
         }
         // for (int i = 0; i < benches.size(); ++i) {
         // Workbench start = benches.get(i);
