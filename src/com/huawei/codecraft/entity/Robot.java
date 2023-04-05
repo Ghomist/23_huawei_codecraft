@@ -97,6 +97,15 @@ public class Robot {
         // self schedule
         selfSchedule(map, benches);
 
+        // buy or sell
+        if (isAtWorkbench() && getAtWorkbenchID() == targetWorkbench) {
+            if (hasItem()) {
+                sell();
+            } else {
+                buy();
+            }
+        }
+
         // generate pref velocity according to target
         genPrefVelocity();
 
