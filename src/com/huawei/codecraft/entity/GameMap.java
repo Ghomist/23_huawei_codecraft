@@ -105,14 +105,15 @@ public class GameMap {
      * @param type 需要的工作台类型（注意是用二进制位来表示的）
      *             比如{@code GameMap.B123}实际值是{@code 0b1110}，表示需要第1、2、3号的工作台，示例：
      *             {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
-     * @return 工作台的id
+     * @return 工作台的 id（找不到任何工作台时会返回{@code -1}）
      */
     public int getClosestWorkbench(Vector2 pos, int type) {
         Vector2Int p = pos.toGrid();
         double minDist = Double.MAX_VALUE;
         int minID = 0;
         for (int id = 0; id < dist.length; ++id) {
-            if (BitCalculator.isOne(type, benches[id].getType())) {// 是需要的类型
+            if (!benches[id].isOrdered() && BitCalculator.isOne(type, benches[id].getType())) {
+                // 工作台未被锁定 且 是需要的类型
                 double d = dist[id][p.x][p.y];
                 if (d < minDist) {
                     minDist = d;
@@ -120,7 +121,7 @@ public class GameMap {
                 }
             }
         }
-        return minID;
+        return minDist == Double.MAX_VALUE ? -1 : minID;
     }
 
     /**

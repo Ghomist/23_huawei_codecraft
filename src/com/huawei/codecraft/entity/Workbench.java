@@ -55,16 +55,12 @@ public class Workbench {
         return remainFrames > 0;
     }
 
-    public boolean isFree() {
-        return remainFrames == -1;
-    }
-
-    public boolean hasFinished() {
-        return remainFrames == 0;
-    }
-
     public boolean isProducingOrFinish() {
         return remainFrames >= 0;
+    }
+
+    public boolean hasProduction() {
+        return hasProduction;
     }
 
     public boolean hasMaterial(int item) {
@@ -73,16 +69,27 @@ public class Workbench {
         return BitCalculator.isOne(materialStatus, item) || pendingMaterial[item];
     }
 
-    public boolean hasProduction() {
-        return hasProduction;
-    }
-
+    /**
+     * 获取订单状态
+     * 
+     * @return 是否有机器人要取物品
+     */
     public boolean isOrdered() {
         return isOrdered;
     }
 
-    public void setOrder(boolean order) {
-        isOrdered = order;
+    /**
+     * 要取物品时调用，防止其它机器人也来同一个工作台抢物品
+     */
+    public void order() {
+        isOrdered = true;
+    }
+
+    /**
+     * 取消订单时调用
+     */
+    public void cancelOrder() {
+        isOrdered = false;
     }
 
     public void setPendingMaterial(int material) {
@@ -93,6 +100,10 @@ public class Workbench {
         pendingMaterial[material] = false;
     }
 
+    /**
+     * 根据缺失的原料计算该工作台的权重
+     */
+    @Deprecated
     public int missingMaterialWeight() {
         switch (type) {
             case 4:

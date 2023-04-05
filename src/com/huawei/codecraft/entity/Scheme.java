@@ -15,7 +15,7 @@ public class Scheme {
 
     public Workbench start;
     public Workbench end;
-    
+
     private int itemType;
     private GameController controller;
     private List<Vector2> path;
@@ -107,12 +107,12 @@ public class Scheme {
 
     public void setPending() {
         isPending = true;
-        start.setOrder(true);
+        start.order();
         end.setPendingMaterial(itemType);
     }
 
     public void onSending() {
-        start.setOrder(false);
+        start.cancelOrder();
     }
 
     public void finish() {
@@ -122,7 +122,7 @@ public class Scheme {
 
     public void cancelPending() {
         isPending = false;
-        start.setOrder(false);
+        start.cancelOrder();
         end.finishPendingMaterial(itemType);
     }
 
