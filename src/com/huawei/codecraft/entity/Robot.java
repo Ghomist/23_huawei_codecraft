@@ -137,7 +137,7 @@ public class Robot {
 
     public void start(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
         // TODO: 初始化（下面只是示例）
-        int targetID = map.getClosestWorkbench(pos, GameMap.B123);
+        int targetID = map.getClosestWorkbench(pos, GameMap.B123, false);
         List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), false);
         if (path != null)
             addTargets(path);

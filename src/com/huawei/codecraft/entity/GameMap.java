@@ -30,6 +30,7 @@ public class GameMap {
 
     private int[][] grid = new int[100][100];
     private double[][][] dist; // 距离场
+    private double[][][] distStrict; // 严格模式的距离场
     private final Vector2[] obstacles;
     private final Workbench[] benches;
 
@@ -48,11 +49,15 @@ public class GameMap {
         obstacles = obs.toArray(new Vector2[obs.size()]);
 
         dist = new double[benches.length][100][100];
+        distStrict = new double[benches.length][100][100];
         LinkedList<Vector2Int> list = new LinkedList<>();
         Set<Vector2Int> visited = new HashSet<>();
         for (Workbench bench : benches) {
             int id = bench.id;
             for (double[] line : dist[id]) {
+                Arrays.fill(line, Double.MAX_VALUE);
+            }
+            for (double[] line : distStrict[id]) {
                 Arrays.fill(line, Double.MAX_VALUE);
             }
             // do bfs
@@ -77,6 +82,28 @@ public class GameMap {
                     }
                 }
             }
+            // do strict bfs
+            start = bench.getPos().toGrid();
+            list.clear();
+            list.add(start);
+            visited.clear();
+            visited.add(start);
+            distStrict[id][start.x][start.y] = 0;
+            while (list.size() > 0) {
+                Vector2Int node = list.removeFirst();
+                for (int i = -1; i <= 1; ++i) {
+                    for (int j = -1; j <= 1; ++j) {
+                        Vector2Int move = node.offset(i, j);
+                        if (nearByWall(move))
+                            continue;
+                        if (visited.add(move)) {
+                            double moveDist = move.x == node.x || move.y == node.y ? 1 : 1.414;
+                            distStrict[id][move.x][move.y] = distStrict[id][node.x][node.y] + moveDist;
+                            list.addLast(move);
+                        }
+                    }
+                }
+            }
         }
 
         // TODO: 剔除不可能工作台
@@ -91,30 +118,32 @@ public class GameMap {
      * 
      * @param pos     任意点的坐标
      * @param benchID 工作台的 id
+     * @param strict  持物品时应该使用严格模式
      * @return 寻路格点距离
      */
-    public double getDistToWorkbench(Vector2 pos, int benchID) {
+    public double getDistToWorkbench(Vector2 pos, int benchID, boolean strict) {
         Vector2Int grid = pos.toGrid();
-        return dist[benchID][grid.x][grid.y];
+        return strict ? distStrict[benchID][grid.x][grid.y] : dist[benchID][grid.x][grid.y];
     }
 
     /**
      * 获取最近的工作台
      * 
-     * @param pos  出发点位置
-     * @param type 需要的工作台类型（注意是用二进制位来表示的）
-     *             比如{@code GameMap.B123}实际值是{@code 0b1110}，表示需要第1、2、3号的工作台，示例：
-     *             {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
+     * @param pos    出发点位置
+     * @param type   需要的工作台类型（注意是用二进制位来表示的）
+     *               比如{@code GameMap.B123}实际值是{@code 0b1110}，表示需要第1、2、3号的工作台，示例：
+     *               {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
+     * @param strict 持物品时应该使用严格模式
      * @return 工作台的 id（找不到任何工作台时会返回{@code -1}）
      */
-    public int getClosestWorkbench(Vector2 pos, int type) {
+    public int getClosestWorkbench(Vector2 pos, int type, boolean strict) {
         Vector2Int p = pos.toGrid();
         double minDist = Double.MAX_VALUE;
         int minID = 0;
         for (int id = 0; id < dist.length; ++id) {
+            // 工作台未被锁定 且 是需要的类型
             if (!benches[id].isOrdered() && BitCalculator.isOne(type, benches[id].getType())) {
-                // 工作台未被锁定 且 是需要的类型
-                double d = dist[id][p.x][p.y];
+                double d = strict ? distStrict[id][p.x][p.y] : dist[id][p.x][p.y];
                 if (d < minDist) {
                     minDist = d;
                     minID = id;
@@ -122,6 +151,32 @@ public class GameMap {
             }
         }
         return minDist == Double.MAX_VALUE ? -1 : minID;
+    }
+
+    /**
+     * 坐标是否靠墙
+     * 
+     * @param pos 坐标
+     */
+    public boolean nearByWall(Vector2Int pos) {
+        return nearByWall(pos.x, pos.y);
+    }
+
+    /**
+     * 坐标是否靠撞墙
+     * 
+     * @param x 横坐标
+     * @param y 纵坐标
+     */
+    public boolean nearByWall(int x, int y) {
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if (ArrayHelper.safeGet(grid, x, y, OBSTACLE) == OBSTACLE) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -174,21 +229,6 @@ public class GameMap {
             }
         }
         return false;
-    }
-
-    private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
-        // TODO: 优化
-        int dx = node1.x < node2.x ? 1 : -1;
-        int dy = node1.y < node2.y ? 1 : -1;
-        for (int x = node1.x; x != node2.x + dx; x += dx) {
-            for (int y = node1.y; y != node2.y + dy; y += dy) {
-                if (ArrayHelper.safeGet(grid, x, y, OBSTACLE) == OBSTACLE) {
-                    return true;
-                }
-            }
-        }
-        return false;
-        // return hasObstacle(node1.x, node1.y, node2.x, node2.y);
     }
 
     /**
@@ -312,5 +352,20 @@ public class GameMap {
                     }
                 })
                 .collect(Collectors.toList());
+    }
+
+    private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
+        // TODO: 优化
+        int dx = node1.x < node2.x ? 1 : -1;
+        int dy = node1.y < node2.y ? 1 : -1;
+        for (int x = node1.x; x != node2.x + dx; x += dx) {
+            for (int y = node1.y; y != node2.y + dy; y += dy) {
+                if (ArrayHelper.safeGet(grid, x, y, OBSTACLE) == OBSTACLE) {
+                    return true;
+                }
+            }
+        }
+        return false;
+        // return hasObstacle(node1.x, node1.y, node2.x, node2.y);
     }
 }
