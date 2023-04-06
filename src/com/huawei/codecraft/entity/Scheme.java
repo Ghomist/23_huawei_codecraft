@@ -1,5 +1,9 @@
 package com.huawei.codecraft.entity;
 
+import java.util.List;
+
+import com.huawei.codecraft.math.Vector2;
+
 public class Scheme {
 
     public final Workbench buy;
@@ -101,7 +105,9 @@ public class Scheme {
 
         if (!canTrade)
             return false;
-        double dist = map.getDistToWorkbench(start.getPos(), end.id, true);
-        return dist != Double.MAX_VALUE;
+        // double dist = map.getDistToWorkbench(start.getPos(), end.id, true);
+        // return dist != Double.MAX_VALUE;
+        List<Vector2> path = map.findPath(start.getPos(), end.getPos(), true);
+        return path != null;
     }
 }

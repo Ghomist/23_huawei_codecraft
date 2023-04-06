@@ -25,7 +25,7 @@ class GameMapNode implements Comparable<GameMapNode> {
         // h = Math.sqrt(Math.pow(pos.x - end.x, 2) + Math.pow(pos.y - end.y, 2));
         h = Math.abs(pos.x - end.x) + Math.abs(pos.y - end.y);
         if (nearByWall)
-            h += 15; // use node near by wall less
+            h *= 5; // use node near by wall less
         f = g + h;
         this.pre = pre;
     }
@@ -40,7 +40,7 @@ class GameMapNode implements Comparable<GameMapNode> {
         if (ArrayHelper.safeGet(map, x, y, GameMap.OBSTACLE) == GameMap.OBSTACLE)
             return null;
         int cnt = nearByWallCount(map, x, y);
-        if (strict && cnt >= 1 || cnt >= 2)
+        if ((strict && cnt >= 1) || cnt >= 2)
             return null;
         return new GameMapNode(new Vector2Int(x, y), end, this, isNearByWall(map, x, y));
     }

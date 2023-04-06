@@ -380,7 +380,7 @@ public class Robot {
                 // lines.add(new HalfPlane(new Line(point, direction), u));
                 // planes.add(new HalfPlane(new Line(point, direction), u));
 
-                finalU = finalU.add(1.8, u);
+                finalU = finalU.add(1.5, u);
             }
         prefVelocity = prefVelocity.add(finalU);
         finalU = Vector2.ZERO;
