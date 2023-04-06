@@ -12,7 +12,7 @@ import com.huawei.codecraft.math.Vector2;
 
 public class GameController {
 
-    public static final int TOTAL_FRAMES_COUNT = 3 * 60 * 50;
+    public static final int TOTAL_FRAMES_COUNT = 5 * 60 * 50;
 
     public static GameController instance = null;
 

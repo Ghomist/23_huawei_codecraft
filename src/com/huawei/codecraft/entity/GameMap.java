@@ -1,5 +1,6 @@
 package com.huawei.codecraft.entity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.huawei.codecraft.helper.ArrayHelper;
+import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
 import com.huawei.codecraft.math.Vector2Int;
 import com.huawei.codecraft.util.BitCalculator;
@@ -20,11 +22,19 @@ public class GameMap {
     public static final int OBSTACLE = -1;
     public static final int EMPTY = 0;
 
-    public static final int B123 = 0b1110;
-    public static final int B456 = 0b1110000;
-    public static final int B7 = 0b10000000;
-    public static final int B8 = 0b100000000;
+    public static final int B1 = 0b0000000010;
+    public static final int B2 = 0b0000000100;
+    public static final int B3 = 0b0000001000;
+    public static final int B4 = 0b0000010000;
+    public static final int B5 = 0b0000100000;
+    public static final int B6 = 0b0001000000;
+    public static final int B7 = 0b0010000000;
+    public static final int B8 = 0b0100000000;
     public static final int B9 = 0b1000000000;
+
+    public static final int B123 = 0b0000001110;
+    public static final int B456 = 0b0001110000;
+    public static final int B1234567 = 0b0011111110;
 
     private static final double PATH_ADJUST = 0.25;
 
@@ -33,6 +43,7 @@ public class GameMap {
     private double[][][] distStrict; // 严格模式的距离场
     private final Vector2[] obstacles;
     private final Workbench[] benches;
+    private List<Scheme> schemes = new ArrayList<>();
 
     public GameMap(int[][] grid, Workbench[] benches) {
         this.benches = benches;
@@ -105,12 +116,21 @@ public class GameMap {
                 }
             }
         }
-
-        // TODO: 剔除不可能工作台
+        for (Workbench a : benches) {
+            for (Workbench b : benches) {
+                if (Scheme.isAvailableScheme(this, a, b)) {
+                    schemes.add(new Scheme(a, b));
+                }
+            }
+        }
     }
 
     public Vector2[] getObstacles() {
         return obstacles;
+    }
+
+    public List<Scheme> getSchemes() {
+        return schemes;
     }
 
     /**
@@ -129,21 +149,21 @@ public class GameMap {
     /**
      * 获取最近的工作台
      * 
-     * @param pos    出发点位置
-     * @param type   需要的工作台类型（注意是用二进制位来表示的）
-     *               比如{@code GameMap.B123}实际值是{@code 0b1110}，表示需要第1、2、3号的工作台，示例：
-     *               {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
-     * @param strict 持物品时应该使用严格模式
+     * @param pos  出发点位置
+     * @param type 需要的工作台类型（注意是用二进制位来表示的）
+     *             比如{@code GameMap.B123}实际值是{@code 0b1110}，表示需要第1、2、3号的工作台，示例：
+     *             {@code getClosestWorkbench(robot.getPos(), GameMap.B123 | GameMap.B456)}
+     * @param sell 是否是“卖出物品”
      * @return 工作台的 id（找不到任何工作台时会返回{@code -1}）
      */
-    public int getClosestWorkbench(Vector2 pos, int type, boolean strict) {
+    public int getClosestWorkbench(Vector2 pos, int type, boolean sell) {
         Vector2Int p = pos.toGrid();
         double minDist = Double.MAX_VALUE;
         int minID = 0;
         for (int id = 0; id < dist.length; ++id) {
-            // 工作台未被锁定 且 是需要的类型
-            if (!benches[id].isOrdered() && BitCalculator.isOne(type, benches[id].getType())) {
-                double d = strict ? distStrict[id][p.x][p.y] : dist[id][p.x][p.y];
+            Workbench b = benches[id];
+            if (BitCalculator.isOne(type, b.getType())) {
+                double d = sell ? distStrict[id][p.x][p.y] : dist[id][p.x][p.y];
                 if (d < minDist) {
                     minDist = d;
                     minID = id;

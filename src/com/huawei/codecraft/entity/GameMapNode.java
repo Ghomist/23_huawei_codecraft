@@ -40,7 +40,7 @@ class GameMapNode implements Comparable<GameMapNode> {
         if (ArrayHelper.safeGet(map, x, y, GameMap.OBSTACLE) == GameMap.OBSTACLE)
             return null;
         int cnt = nearByWallCount(map, x, y);
-        if (strict && cnt >= 2)
+        if (strict && cnt >= 1 || cnt >= 2)
             return null;
         return new GameMapNode(new Vector2Int(x, y), end, this, isNearByWall(map, x, y));
     }

@@ -1,5 +1,8 @@
 package com.huawei.codecraft.entity;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -54,8 +57,8 @@ public class Robot {
     private Vector2 pos;
     private Vector2 prefVelocity = Vector2.ZERO;
 
-    private int targetWorkbench;
-    private LinkedList<Vector2> targets = new LinkedList<>();
+    private Scheme myScheme = null;
+    private LinkedList<Vector2> path = new LinkedList<>();
 
     private List<HalfPlane> planes = new LinkedList<>();
     private List<String> cmdList = new LinkedList<>();
@@ -97,15 +100,6 @@ public class Robot {
         // self schedule
         selfSchedule(map, benches);
 
-        // buy or sell
-        if (isAtWorkbench() && getAtWorkbenchID() == targetWorkbench) {
-            if (hasItem()) {
-                sell();
-            } else {
-                buy();
-            }
-        }
-
         // generate pref velocity according to target
         genPrefVelocity();
 
@@ -116,11 +110,12 @@ public class Robot {
         final double diff = RadianHelper.diff(dir, prefVelocity.radian());
 
         // lead current velocity to pref velocity
+        final double speedK = Math.cos(Math.abs(diff));
         if (Math.abs(diff) < Math.PI / 7) {
-            final double speedK = Math.cos(Math.abs(diff));
             setForwardSpeed(speedK * prefVelocity.length());
         } else {
-            setForwardSpeed(0);
+            setForwardSpeed(speedK * prefVelocity.length() / 5);
+            // setForwardSpeed(0);
         }
 
         // rotate to pref velocity
@@ -128,38 +123,106 @@ public class Robot {
     }
 
     private void finishTarget() {
-        targets.removeFirst();
+        path.removeFirst();
     }
 
     public void resetTargets(List<Vector2> list) {
-        this.targets.clear();
-        this.targets.addAll(list);
+        this.path.clear();
+        this.path.addAll(list);
     }
 
     public void addTargets(List<Vector2> list) {
-        this.targets.addAll(list);
+        this.path.addAll(list);
     }
 
     public void addTarget(Vector2 pos) {
-        targets.add(pos);
+        path.add(pos);
     }
 
     public void start(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
-        // TODO: 初始化（下面只是示例）
-        int targetID = map.getClosestWorkbench(pos, GameMap.B123, false);
-        List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), false);
-        if (path != null)
-            addTargets(path);
+        selfSchedule(map, benches);
     }
 
     private void selfSchedule(GameMap map, Workbench[] benches) {
         // TODO: 决策
+        if (hasItem()) {
+            // sell item
+            if (isAtWorkbench() && myScheme != null) {
+                if (getAtWorkbenchID() == myScheme.sell.id) {
+                    sell();
+                    myScheme.finishPending();
+                    myScheme = null;
+                    return;
+                }
+            }
+
+        } else {
+            // buy
+            if (isAtWorkbench() && myScheme != null) {
+                if (getAtWorkbenchID() == myScheme.buy.id) {
+                    buy();
+
+                    // head to sell
+                    // TODO: 这里居然还有寻不到终点去的
+                    List<Vector2> path = map.findPath(pos, myScheme.sell.getPos(), true);
+                    if (path != null) {
+                        resetTargets(path);
+                    }
+                    
+                    myScheme.startSending();
+
+                    // skip frame
+                    return;
+                }
+            }
+
+            // get all
+            List<Scheme> schemes = map.getSchemes();
+
+            // filter to available and find best
+            // TODO: 策略需要优化
+            Scheme newScheme = schemes.stream()
+                    .filter(x -> x.canPending() && map.getDistToWorkbench(pos, x.buy.id, false) != Double.MAX_VALUE)
+                    .min(Comparator.comparing(s -> map.getDistToWorkbench(pos, s.buy.id, false)))
+                    .orElse(null);
+            if (newScheme == null)
+                return;
+
+            // test if need to change
+            boolean needToChange = false;
+            if (myScheme == null) {
+                needToChange = true;
+            } else {
+                double dist = map.getDistToWorkbench(pos, myScheme.buy.id, false);
+                double newDist = map.getDistToWorkbench(pos, newScheme.buy.id, false);
+                needToChange = newDist < dist;
+            }
+
+            // set new scheme
+            if (needToChange) {
+                // cancel last one
+                if (myScheme != null) {
+                    myScheme.cancelPending();
+                    myScheme = null;
+                }
+
+                // re-find path
+                List<Vector2> path = map.findPath(pos, newScheme.buy.getPos(), false);
+                if (path == null)
+                    return;
+
+                // set new
+                myScheme = newScheme;
+                myScheme.setPending();
+                resetTargets(path);
+            }
+        }
     }
 
     private void genPrefVelocity() {
-        if (targets.size() > 0) {
+        if (path.size() > 0) {
             // get target
-            final Vector2 targetPos = targets.getFirst();
+            final Vector2 targetPos = path.getFirst();
 
             // find target direction
             final double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
@@ -239,13 +302,13 @@ public class Robot {
         // detect obstacles (recognize wall as circle)
         if (RVO2_AVOID_WALL)
             for (Vector2 obsPos : obstacles) {
-                if (Vector2.distance(pos, obsPos) > RVO2_AVOID_DIST / 7)
+                if (Vector2.distance(pos, obsPos) > 2.5)
                     continue;
 
                 final Vector2 relativePosition = obsPos.subtract(pos);
                 final Vector2 relativeVelocity = getLineSpeed();
                 final double dist2 = relativePosition.length2();
-                final double rr = getRadius();
+                final double rr = getRadius() + 0.25;
                 final double rr2 = rr * rr;
 
                 // 在三角锥的外面
@@ -317,7 +380,7 @@ public class Robot {
                 // lines.add(new HalfPlane(new Line(point, direction), u));
                 // planes.add(new HalfPlane(new Line(point, direction), u));
 
-                finalU = finalU.add(0.5, u);
+                finalU = finalU.add(1.8, u);
             }
         prefVelocity = prefVelocity.add(finalU);
         finalU = Vector2.ZERO;
@@ -416,7 +479,7 @@ public class Robot {
     }
 
     public LineSegment getCurrentPath() {
-        return new LineSegment(pos, targets.getFirst());
+        return new LineSegment(pos, path.getFirst());
     }
 
     public void setForwardSpeed(double speed) {
@@ -476,7 +539,7 @@ public class Robot {
     }
 
     public boolean isFree() {
-        return targets.size() == 0;
+        return path.size() == 0;
     }
 
     public List<String> getCommands() {

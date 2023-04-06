@@ -96,7 +96,7 @@ public class Workbench {
         pendingMaterial[material] = true;
     }
 
-    public void finishPendingMaterial(int material) {
+    public void clearPendingMaterial(int material) {
         pendingMaterial[material] = false;
     }
 
