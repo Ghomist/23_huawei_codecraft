@@ -7,16 +7,20 @@ public class Scheme {
     public final int itemType;
 
     // private final GameMap map;
-    // private final double distBetween;
+    private final double distBetween;
 
     private boolean isPending = false;
 
-    public Scheme(Workbench buy, Workbench sell) {
+    public Scheme(GameMap map, Workbench buy, Workbench sell) {
         this.buy = buy;
         this.sell = sell;
         this.itemType = buy.getType();
         // this.map = map;
-        // distBetween = map.getDistToWorkbench(buy.getPos(), sell.id, true);
+        distBetween = map.getDistToWorkbench(buy.getPos(), sell.id, true);
+    }
+
+    public double getDistBetween() {
+        return distBetween;
     }
 
     public void setPending() {
@@ -34,7 +38,7 @@ public class Scheme {
     public void startSending() {
         buy.cancelOrder();
     }
-    
+
     public void finishPending() {
         isPending = false;
         sell.clearPendingMaterial(itemType);

@@ -168,7 +168,7 @@ public class Robot {
                     if (path != null) {
                         resetTargets(path);
                     }
-                    
+
                     myScheme.startSending();
 
                     // skip frame
@@ -183,7 +183,7 @@ public class Robot {
             // TODO: 策略需要优化
             Scheme newScheme = schemes.stream()
                     .filter(x -> x.canPending() && map.getDistToWorkbench(pos, x.buy.id, false) != Double.MAX_VALUE)
-                    .min(Comparator.comparing(s -> map.getDistToWorkbench(pos, s.buy.id, false)))
+                    .min(Comparator.comparing(s -> map.getDistToWorkbench(pos, s.buy.id, false) + s.getDistBetween()))
                     .orElse(null);
             if (newScheme == null)
                 return;

@@ -95,6 +95,8 @@ public class GameMap {
             }
             // do strict bfs
             start = bench.getPos().toGrid();
+            if (nearByWall(start))
+                continue;
             list.clear();
             list.add(start);
             visited.clear();
@@ -119,7 +121,7 @@ public class GameMap {
         for (Workbench a : benches) {
             for (Workbench b : benches) {
                 if (Scheme.isAvailableScheme(this, a, b)) {
-                    schemes.add(new Scheme(a, b));
+                    schemes.add(new Scheme(this, a, b));
                 }
             }
         }
@@ -191,7 +193,7 @@ public class GameMap {
     public boolean nearByWall(int x, int y) {
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                if (ArrayHelper.safeGet(grid, x, y, OBSTACLE) == OBSTACLE) {
+                if (ArrayHelper.safeGet(grid, x + i, y + j, OBSTACLE) == OBSTACLE) {
                     return true;
                 }
             }
