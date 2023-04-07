@@ -53,7 +53,7 @@ public class Scheme {
      */
     public boolean canPending() {
         return !isPending
-                && !buy.isOrdered()
+                && (buy.getType() <= 3 || !buy.isOrdered())
                 && buy.hasProduction()
                 // && buy.isProducingOrFinish()
                 && !sell.hasMaterial(itemType);
@@ -76,32 +76,29 @@ public class Scheme {
             return false;
 
         boolean canTrade = false;
-        if (b == 9)
-            canTrade = true;
-        else
-            switch (a) {
-                case 1:
-                    if (b == 4 || b == 5)
-                        canTrade = true;
-                    break;
-                case 2:
-                    if (b == 4 || b == 6)
-                        canTrade = true;
-                    break;
-                case 3:
-                    if (b == 5 || b == 6)
-                        canTrade = true;
-                    break;
-                case 4:
-                case 5:
-                case 6:
-                    if (b == 7)
-                        canTrade = true;
-                    break;
-                case 7:
-                    if (b >= 8)
-                        canTrade = true;
-            }
+        switch (a) {
+            case 1:
+                if (b == 4 || b == 5)
+                    canTrade = true;
+                break;
+            case 2:
+                if (b == 4 || b == 6)
+                    canTrade = true;
+                break;
+            case 3:
+                if (b == 5 || b == 6)
+                    canTrade = true;
+                break;
+            case 4:
+            case 5:
+            case 6:
+                if (b == 7 || b == 9)
+                    canTrade = true;
+                break;
+            case 7:
+                if (b >= 8)
+                    canTrade = true;
+        }
 
         if (!canTrade)
             return false;
