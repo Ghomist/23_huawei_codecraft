@@ -117,13 +117,13 @@ public class SchemeDeprecated {
 
     public void finish() {
         isPending = false;
-        end.clearPendingMaterial(itemType);
+        end.finishPendingMaterial(itemType);
     }
 
     public void cancelPending() {
         isPending = false;
         start.cancelOrder();
-        end.clearPendingMaterial(itemType);
+        end.finishPendingMaterial(itemType);
     }
 
     public boolean isAvailable(Robot robot) {

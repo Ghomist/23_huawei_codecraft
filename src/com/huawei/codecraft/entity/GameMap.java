@@ -118,13 +118,22 @@ public class GameMap {
                 }
             }
         }
-        for (Workbench a : benches) {
-            for (Workbench b : benches) {
-                if (Scheme.isAvailableScheme(this, a, b)) {
-                    schemes.add(new Scheme(this, a, b));
+        for (int i = 0; i < benches.length; i++) {
+            for (int j = 0; j < benches.length; j++) {
+                if (i == j)
+                    continue;
+                if (Scheme.isAvailableScheme(this, benches[i], benches[j])) {
+                    schemes.add(new Scheme(this, benches[i], benches[j]));
                 }
             }
         }
+        // for (Workbench a : benches) {
+        // for (Workbench b : benches) {
+        // if (Scheme.isAvailableScheme(this, a, b)) {
+        // schemes.add(new Scheme(this, a, b));
+        // }
+        // }
+        // }
     }
 
     public Vector2[] getObstacles() {
@@ -201,6 +210,17 @@ public class GameMap {
         return false;
     }
 
+    public int nearByWallCount(int x, int y) {
+        int cnt = 0;
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if (ArrayHelper.safeGet(grid, x + i, y + j, OBSTACLE) == OBSTACLE)
+                    cnt++;
+            }
+        }
+        return cnt;
+    }
+
     /**
      * 寻找网格上的两点的直线是否存在障碍物
      * 
@@ -263,75 +283,158 @@ public class GameMap {
     public List<Vector2> findPath(Vector2 from, Vector2 to, boolean strict) {
         Vector2Int start = from.toGrid();
         Vector2Int end = to.toGrid();
+        if (start.x == end.x && start.y == end.y) {
+            List<Vector2> ret = new LinkedList<>();
+            ret.add(to);
+            return ret;
+        }
 
-        Map<GameMapNode, GameMapNode> visited = new HashMap<>();
-        PriorityQueue<GameMapNode> visiting = new PriorityQueue<>();
-        GameMapNode beginNode = GameMapNode.makeStartNode(start, end);
-        visiting.add(beginNode);
-        visited.put(beginNode, beginNode);
+        double[][] g = new double[100][100];
+        Vector2Int[][] last = new Vector2Int[100][100];
+        PriorityQueue<Vector2Int> nodes = new PriorityQueue<>((a, b) -> {
+            return Double.compare(g[a.x][a.y] + menhadenDist(a.x, a.y, end.x, end.y),
+                    g[b.x][b.y] + menhadenDist(b.x, b.y, end.x, end.y));
+        });
+        // PriorityQueue<Vector2Int> nodes = new PriorityQueue<>((a, b) -> {
+        // return Double.compare(g[a.x][a.y] + ojldDist(a.x, a.y, end.x, end.y),
+        // g[b.x][b.y] + ojldDist(b.x, b.y, end.x, end.y));
+        // });
 
-        GameMapNode endNode = null;
+        Vector2Int begin = start;
+        nodes.add(begin);
+        g[begin.x][begin.y] = 0.001;
 
-        boolean foundEnd = false;
-        while (!foundEnd && visiting.size() > 0) {
-            // choose best node
-            GameMapNode choice = visiting.poll();
-
-            // 8 dir expand
-            for (int i = -1; i <= 1; ++i) {
-                for (int j = -1; j <= 1; ++j) {
+        Vector2Int endPos = null;
+        while (nodes.size() > 0 && endPos == null) {
+            Vector2Int choose = nodes.poll();
+            int x = choose.x;
+            int y = choose.y;
+            for (int i = -1; i <= 1 && endPos == null; i++) {
+                for (int j = -1; j <= 1; j++) {
                     if (i == 0 && j == 0)
                         continue;
                     if (i != 0 && j != 0) // 四向寻路
                         continue;
-                    GameMapNode move = choice.makeMove(grid, i, j, end, strict);
-                    if (move != null) {
-                        if (move.x == end.x && move.y == end.y) {
-                            foundEnd = true;
-                            endNode = move;
-                            break;
+                    int x_ = x + i;
+                    int y_ = y + j;
+                    if (strict) {
+                        if (nearByWall(x_, y_))
+                            continue;
+                    } else {
+                        if (ArrayHelper.safeGet(grid, x_, y_, OBSTACLE) == OBSTACLE
+                                || nearByWallCount(x_, y_) >= 3) {
+                            continue;
                         }
-                        if (!visited.containsKey(move)) {
-                            // new visiting
-                            visited.put(move, move);
-                            visiting.add(move);
-                        } else {
-                            // update the G value
-                            GameMapNode theMove = visited.get(move);
-                            theMove.tryUpdateByPrevious(grid, choice);
+                    }
+                    if (x_ < 0 || x_ >= 100 || y_ < 0 || y_ >= 100)
+                        continue;
+                    if (x_ == end.x && y_ == end.y) {
+                        // arrive end
+                        endPos = new Vector2Int(x_, y_);
+                        last[x_][y_] = choose;
+                        break;
+                    }
+                    if (g[x_][y_] == 0) {
+                        // new visit
+                        g[x_][y_] = g[x][y] + 1;
+                        last[x_][y_] = choose;
+                        nodes.add(new Vector2Int(x_, y_));
+                    } else {
+                        // visited, update
+                        double newG = g[x][y] + 1;
+                        if (newG <= g[x_][y_]) {
+                            g[x_][y_] = newG;
+                            last[x_][y_] = choose;
                         }
                     }
                 }
-                if (foundEnd)
-                    break;
             }
         }
 
-        if (endNode != null) {
-            LinkedList<GameMapNode> ans = new LinkedList<>();
+        if (endPos != null) {
+            LinkedList<Vector2Int> list = new LinkedList<>();
 
-            ans.add(endNode);
-            while (endNode.pre != null) {
-                ans.addFirst(endNode.pre);
-                endNode = endNode.pre;
+            while (last[endPos.x][endPos.y] != null) {
+                list.addFirst(endPos);
+                endPos = last[endPos.x][endPos.y];
             }
+            list.addFirst(endPos);
 
-            return smoothPath(ans);
+            List<Vector2> ret = smoothPath(list);
+            return ret;
         } else {
             // no path
             return null;
         }
+
+        // Map<GameMapNode, GameMapNode> visited = new HashMap<>();
+        // PriorityQueue<GameMapNode> visiting = new PriorityQueue<>();
+        // GameMapNode beginNode = GameMapNode.makeStartNode(start, end);
+        // visiting.add(beginNode);
+        // visited.put(beginNode, beginNode);
+
+        // GameMapNode endNode = null;
+
+        // boolean foundEnd = false;
+        // while (!foundEnd && visiting.size() > 0) {
+        // // choose best node
+        // GameMapNode choice = visiting.poll();
+
+        // // 8 dir expand
+        // for (int i = -1; i <= 1; ++i) {
+        // for (int j = -1; j <= 1; ++j) {
+        // if (i == 0 && j == 0)
+        // continue;
+        // if (i != 0 && j != 0) // 四向寻路
+        // continue;
+        // GameMapNode move = choice.makeMove(grid, i, j, end, strict);
+        // if (move != null) {
+        // if (move.x == end.x && move.y == end.y) {
+        // foundEnd = true;
+        // endNode = move;
+        // break;
+        // }
+        // if (!visited.containsKey(move)) {
+        // // new visiting
+        // visited.put(move, move);
+        // visiting.add(move);
+        // } else {
+        // // update the G value
+        // GameMapNode theMove = visited.get(move);
+        // theMove.tryUpdateByPrevious(grid, choice);
+        // }
+        // }
+        // }
+        // if (foundEnd)
+        // break;
+        // }
+        // }
+
+        // if (endNode != null) {
+        // LinkedList<GameMapNode> ans = new LinkedList<>();
+
+        // ans.add(endNode);
+        // while (endNode.pre != null) {
+        // ans.addFirst(endNode.pre);
+        // endNode = endNode.pre;
+        // }
+
+        // return smoothPath(ans);
+        // } else {
+        // // no path
+        // return null;
+        // }
     }
 
-    private List<Vector2> smoothPath(List<GameMapNode> path) {
+    private List<Vector2> smoothPath(List<Vector2Int> path) {
         // 消除长直线
-        GameMapNode[] pathArr = path.toArray(new GameMapNode[path.size()]);
+        Vector2Int[] pathArr = path.toArray(new Vector2Int[path.size()]);
         path.clear();
         path.add(pathArr[0]);
         for (int i = 1; i < pathArr.length - 1; ++i) {
-            GameMapNode last = pathArr[i - 1];
-            GameMapNode crt = pathArr[i];
-            GameMapNode nxt = pathArr[i + 1];
+            Vector2Int last = pathArr[i - 1];
+            Vector2Int crt = pathArr[i];
+            Vector2Int nxt = pathArr[i + 1];
             boolean canRemove = last.x == crt.x && nxt.x == crt.x || last.y == crt.y && nxt.y == crt.y;
             if (!canRemove) {
                 path.add(crt);
@@ -340,13 +443,13 @@ public class GameMap {
         path.add(pathArr[pathArr.length - 1]);
 
         // 消除拐角
-        pathArr = path.toArray(new GameMapNode[path.size()]);
+        pathArr = path.toArray(new Vector2Int[path.size()]);
         path.clear();
         path.add(pathArr[0]);
         int start = 0;
         for (int i = 1; i < pathArr.length - 1; ++i) {
-            GameMapNode crt = pathArr[i];
-            GameMapNode nxt = pathArr[i + 1];
+            Vector2Int crt = pathArr[i];
+            Vector2Int nxt = pathArr[i + 1];
             boolean canRemove = !hasObstacle(pathArr[start], nxt);
             if (!canRemove) {
                 path.add(crt);
@@ -355,28 +458,28 @@ public class GameMap {
         }
         path.add(pathArr[pathArr.length - 1]);
 
-        // return path.stream()
-        // .map(x -> x.getPos())
-        // .collect(Collectors.toList());
-
         return path.stream()
                 .map(p -> {
                     if (ArrayHelper.safeGet(grid, p.x + 1, p.y, OBSTACLE) == OBSTACLE) {
-                        return p.getPos().add(new Vector2(-PATH_ADJUST, 0));
+                        return p.toPos().add(new Vector2(-PATH_ADJUST, 0));
                     } else if (ArrayHelper.safeGet(grid, p.x - 1, p.y, OBSTACLE) == OBSTACLE) {
-                        return p.getPos().add(new Vector2(PATH_ADJUST, 0));
+                        return p.toPos().add(new Vector2(PATH_ADJUST, 0));
                     } else if (ArrayHelper.safeGet(grid, p.x, p.y + 1, OBSTACLE) == OBSTACLE) {
-                        return p.getPos().add(new Vector2(0, -PATH_ADJUST));
+                        return p.toPos().add(new Vector2(0, -PATH_ADJUST));
                     } else if (ArrayHelper.safeGet(grid, p.x, p.y - 1, OBSTACLE) == OBSTACLE) {
-                        return p.getPos().add(new Vector2(0, PATH_ADJUST));
+                        return p.toPos().add(new Vector2(0, PATH_ADJUST));
                     } else {
-                        return p.getPos();
+                        return p.toPos();
                     }
                 })
                 .collect(Collectors.toList());
+
+        // return path.stream()
+        // .map(x -> x.getPos())
+        // .collect(Collectors.toList());
     }
 
-    private boolean hasObstacle(GameMapNode node1, GameMapNode node2) {
+    private boolean hasObstacle(Vector2Int node1, Vector2Int node2) {
         // TODO: 优化
         int dx = node1.x < node2.x ? 1 : -1;
         int dy = node1.y < node2.y ? 1 : -1;
@@ -389,5 +492,13 @@ public class GameMap {
         }
         return false;
         // return hasObstacle(node1.x, node1.y, node2.x, node2.y);
+    }
+
+    private double ojldDist(int x1, int y1, int x2, int y2) {
+        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+    }
+
+    private int menhadenDist(int x1, int y1, int x2, int y2) {
+        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }
 }

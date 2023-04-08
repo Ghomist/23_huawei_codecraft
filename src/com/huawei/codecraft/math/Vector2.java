@@ -77,7 +77,7 @@ public class Vector2 {
     }
 
     public Vector2Int toGrid() {
-        return new Vector2Int(MathHelper.round(x * 2), MathHelper.round(y * 2));
+        return new Vector2Int((int) (x * 2), (int) (y * 2));
     }
 
     public static Vector2 getPosFromGridIndex(int x, int y) {

@@ -1,12 +1,23 @@
 package com.huawei.codecraft.io;
 
 import java.io.BufferedOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintStream;
 
 public class Output {
     public static final boolean DEBUG_MODE = true;
 
     public static final PrintStream out = new PrintStream(new BufferedOutputStream(System.out));
+    public static FileWriter fw;
+
+    static {
+        try {
+            fw = new FileWriter("log.txt");
+        } catch (Exception e) {
+
+        }
+    }
 
     public static void ok() {
         sendAndFlush("OK");
@@ -22,7 +33,12 @@ public class Output {
     }
 
     public static void debug(Object obj) {
-        if (DEBUG_MODE)
+        if (DEBUG_MODE) {
             System.err.println(obj);
+            try {
+                fw.append(obj.toString());
+            } catch (Exception e) {
+            }
+        }
     }
 }

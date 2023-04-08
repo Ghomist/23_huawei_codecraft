@@ -36,7 +36,7 @@ public class Scheme {
     public void cancelPending() {
         isPending = false;
         buy.cancelOrder();
-        sell.clearPendingMaterial(itemType);
+        sell.cancelPendingMaterial(itemType);
     }
 
     public void startSending() {
@@ -45,7 +45,7 @@ public class Scheme {
 
     public void finishPending() {
         isPending = false;
-        sell.clearPendingMaterial(itemType);
+        sell.finishPendingMaterial(itemType);
     }
 
     /**
@@ -102,9 +102,9 @@ public class Scheme {
 
         if (!canTrade)
             return false;
-        // double dist = map.getDistToWorkbench(start.getPos(), end.id, true);
-        // return dist != Double.MAX_VALUE;
-        List<Vector2> path = map.findPath(start.getPos(), end.getPos(), true);
-        return path != null;
+        double dist = map.getDistToWorkbench(start.getPos(), end.id, true);
+        return dist != Double.MAX_VALUE;
+        // List<Vector2> path = map.findPath(start.getPos(), end.getPos(), true);
+        // return path != null;
     }
 }

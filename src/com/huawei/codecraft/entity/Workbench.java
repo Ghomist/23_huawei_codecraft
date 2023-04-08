@@ -64,7 +64,7 @@ public class Workbench {
     }
 
     public boolean hasMaterial(int item) {
-        if (type >= 8)
+        if (type >= 8 || type <= 3)
             return false;
         return BitCalculator.isOne(materialStatus, item) || pendingMaterial[item];
     }
@@ -96,7 +96,12 @@ public class Workbench {
         pendingMaterial[material] = true;
     }
 
-    public void clearPendingMaterial(int material) {
+    public void finishPendingMaterial(int material) {
+        pendingMaterial[material] = false;
+        // BitCalculator.setOne(materialStatus, material);
+    }
+
+    public void cancelPendingMaterial(int material) {
         pendingMaterial[material] = false;
     }
 

@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.huawei.codecraft.controller.GameController;
 import com.huawei.codecraft.helper.LinearProgramHelper;
 import com.huawei.codecraft.helper.PriceHelper;
 import com.huawei.codecraft.helper.RadianHelper;
@@ -14,6 +15,7 @@ import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
 import com.huawei.codecraft.math.Vector2;
+import com.huawei.codecraft.util.BitCalculator;
 
 public class Robot {
 
@@ -58,7 +60,8 @@ public class Robot {
     private Vector2 prefVelocity = Vector2.ZERO;
 
     private Scheme myScheme = null;
-    private LinkedList<Vector2> path = new LinkedList<>();
+    private final LinkedList<Vector2> path = new LinkedList<>();
+    private Vector2 lastTarget;
 
     private List<HalfPlane> planes = new LinkedList<>();
     private List<String> cmdList = new LinkedList<>();
@@ -100,6 +103,9 @@ public class Robot {
         // self schedule
         selfSchedule(map, benches);
 
+        // test stuck
+        avoidStuck(robots);
+
         // generate pref velocity according to target
         genPrefVelocity();
 
@@ -123,7 +129,8 @@ public class Robot {
     }
 
     private void finishTarget() {
-        path.removeFirst();
+        Vector2 last = path.removeFirst();
+        lastTarget = last;
     }
 
     public void resetTargets(List<Vector2> list) {
@@ -135,12 +142,50 @@ public class Robot {
         this.path.addAll(list);
     }
 
-    public void addTarget(Vector2 pos) {
-        path.add(pos);
+    public void insertTarget(Vector2 pos) {
+        if (pos != null && pos != lastTarget)
+            path.addFirst(pos);
     }
 
     public void start(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
         selfSchedule(map, benches);
+    }
+
+    private Vector2[] posWindow = new Vector2[30];
+    private int posIndex = 0;
+    private int coolDownFrame = 50;
+
+    private void avoidStuck(Robot[] robots) {
+        Vector2 prePos = posWindow[posIndex];
+        posWindow[posIndex] = pos;
+        posIndex++;
+        if (posIndex >= posWindow.length) {
+            posIndex -= posWindow.length;
+        }
+        if (coolDownFrame > 0) {
+            coolDownFrame--;
+        } else {
+            if (prePos != null && Vector2.distance(prePos, pos) < 0.001 && path.size() != 0) {
+                // Output.debug(id + " is stuck " + GameController.frameID);
+                boolean nearRobot = false;
+                for (Robot r : robots) {
+                    if (r == this)
+                        continue;
+                    if (Vector2.distance(pos, r.pos) < 1.1) {
+                        nearRobot = true;
+                        break;
+                    }
+                }
+                if (nearRobot) {
+                    insertTarget(lastTarget);
+                } else {
+                    Vector2 line = path.getFirst().subtract(lastTarget);
+                    Vector2 newTarget = new Line(lastTarget, line).getProjection(pos); // TODO: no offset
+                    insertTarget(newTarget);
+                }
+                coolDownFrame = 20;
+            }
+        }
     }
 
     private void selfSchedule(GameMap map, Workbench[] benches) {
@@ -154,6 +199,14 @@ public class Robot {
                     myScheme = null;
                     return;
                 }
+            }
+            if (myScheme == null) {
+                if (this.path.size() == 0) {
+                    int targetID = map.getClosestWorkbench(pos, BitCalculator.setOne(0, getItem()), true);
+                    List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), true);
+                    resetTargets(path);
+                }
+                sell();
             }
 
         } else {
@@ -181,10 +234,27 @@ public class Robot {
 
             // filter to available and find best
             // TODO: 策略需要优化
-            Scheme newScheme = schemes.stream()
-                    .filter(x -> x.canPending() && map.getDistToWorkbench(pos, x.buy.id, false) != Double.MAX_VALUE)
-                    .min(Comparator.comparing(s -> map.getDistToWorkbench(pos, s.buy.id, false) + s.getDistBetween()))
-                    .orElse(null);
+            // Scheme newScheme = schemes.stream()
+            // .filter(x -> x.canPending() && map.getDistToWorkbench(pos, x.buy.id, false)
+            // != Double.MAX_VALUE)
+            // .min(Comparator.comparing(s -> map.getDistToWorkbench(pos, s.buy.id, false) +
+            // s.getDistBetween()))
+            // .orElse(null);
+            Scheme newScheme = null;
+            double cost = 0;
+            for (Scheme s : schemes) {
+                double d = map.getDistToWorkbench(pos, s.buy.id, false);
+                // if (d == Double.MAX_VALUE)
+                //     System.err.println(GameController.frameID + " " + id + " " + d + " " + s.buy.id);
+                if (s.canPending() && d != Double.MAX_VALUE) {
+                    double c = map.getDistToWorkbench(pos, s.buy.id, false) + s.getDistBetween();
+                    if (newScheme == null || c < cost) {
+                        newScheme = s;
+                        cost = c;
+                    }
+                }
+            }
+
             if (newScheme == null)
                 return;
 
@@ -225,6 +295,8 @@ public class Robot {
             final Vector2 targetPos = path.getFirst();
 
             // find target direction
+            // Output.debug(targetPos);
+            // Output.debug(pos);
             final double targetDir = Math.atan2(targetPos.y - pos.y, targetPos.x - pos.x);
 
             // find best speed
@@ -388,6 +460,9 @@ public class Robot {
         // detect other robots
         for (Robot other : robots) {
             if (other.id == id || Vector2.distance(pos, other.pos) > RVO2_AVOID_DIST)
+                continue;
+
+            if (Math.abs(RadianHelper.diff(dir, other.dir)) > Math.PI * 3 / 4)
                 continue;
 
             final Vector2 relativePosition = other.pos.subtract(pos);

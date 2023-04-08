@@ -18,7 +18,7 @@ public class GameController {
 
     public boolean running;
 
-    public int frameID;
+    public static int frameID;
     public int money;
     public int workbenchCountCount;
     public boolean hasSeven = false;

@@ -6,6 +6,7 @@ import com.huawei.codecraft.helper.ArrayHelper;
 import com.huawei.codecraft.math.Vector2;
 import com.huawei.codecraft.math.Vector2Int;
 
+@Deprecated
 class GameMapNode implements Comparable<GameMapNode> {
     public final int x;
     public final int y;
