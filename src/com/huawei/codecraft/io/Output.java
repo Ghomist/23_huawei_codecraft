@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import com.huawei.codecraft.controller.GameController;
+
 public class Output {
     public static final boolean DEBUG_MODE = true;
 
@@ -34,9 +36,9 @@ public class Output {
 
     public static void debug(Object obj) {
         if (DEBUG_MODE) {
-            System.err.println(obj);
+            System.err.println("[" + GameController.frameID + "] " + obj);
             try {
-                fw.append(obj.toString());
+                fw.append("[" + GameController.frameID + "] " + obj.toString());
             } catch (Exception e) {
             }
         }

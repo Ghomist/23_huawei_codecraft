@@ -98,7 +98,7 @@ public class Workbench {
 
     public void finishPendingMaterial(int material) {
         pendingMaterial[material] = false;
-        // BitCalculator.setOne(materialStatus, material);
+        BitCalculator.setOne(materialStatus, material);
     }
 
     public void cancelPendingMaterial(int material) {
