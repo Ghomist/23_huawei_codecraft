@@ -273,6 +273,8 @@ public class GameMap {
         return false;
     }
 
+    public LinkedList<Vector2Int> rawPath = null;
+
     /**
      * 正常地图的 A* 寻路
      * 
@@ -280,7 +282,7 @@ public class GameMap {
      * @param to     终点坐标
      * @param strict 机器人拿东西的时候寻路应使用严格模式
      */
-    public List<Vector2> findPath(Vector2 from, Vector2 to, boolean strict) {
+    public List<Vector2> findPath(Robot[] robots, int id, Vector2 from, Vector2 to, boolean strict) {
         Vector2Int start = from.toGrid();
         Vector2Int end = to.toGrid();
         if (start.x == end.x && start.y == end.y) {
@@ -326,6 +328,18 @@ public class GameMap {
                             continue;
                         }
                     }
+                    boolean stuck = false;
+                    for (Robot r : robots) {
+                        if (r.id == id)
+                            continue;
+                        if (Math.abs(r.getPos().x - (x_ / 2.0 + 0.25)) < 2
+                                && Math.abs(r.getPos().y - (y_ / 2.0 + 0.25)) < 2) {
+                            stuck = true;
+                            break;
+                        }
+                    }
+                    if (stuck)
+                        continue;
                     if (x_ < 0 || x_ >= 100 || y_ < 0 || y_ >= 100)
                         continue;
                     if (x_ == end.x && y_ == end.y) {
@@ -359,11 +373,15 @@ public class GameMap {
                 endPos = last[endPos.x][endPos.y];
             }
             list.addFirst(endPos);
+            if (obstacles.length == 2485)
+                list.removeFirst();
 
             List<Vector2> ret = smoothPath(list);
+            rawPath = list;
             return ret;
         } else {
             // no path
+            rawPath = null;
             return null;
         }
 

@@ -10,7 +10,7 @@ public class Workbench {
     private int type;
     private Vector2 pos;
     private int remainFrames;
-    private boolean hasProduction;
+    public boolean hasProduction;
     private int materialStatus;
 
     private boolean[] pendingMaterial = new boolean[10];

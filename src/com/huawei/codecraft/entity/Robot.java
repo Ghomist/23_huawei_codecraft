@@ -15,6 +15,7 @@ import com.huawei.codecraft.math.HalfPlane;
 import com.huawei.codecraft.math.Line;
 import com.huawei.codecraft.math.LineSegment;
 import com.huawei.codecraft.math.Vector2;
+import com.huawei.codecraft.math.Vector2Int;
 import com.huawei.codecraft.util.BitCalculator;
 
 public class Robot {
@@ -101,16 +102,16 @@ public class Robot {
 
     public void schedule(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
         // self schedule
-        selfSchedule(map, benches);
-
-        // test stuck
-        avoidStuck(robots);
+        selfSchedule(map, benches, robots);
 
         // generate pref velocity according to target
-        genPrefVelocity();
+        genPrefVelocity(map, robots);
 
         // RVO2
         avoidImpact(robots, obstacles);
+
+        // test stuck
+        avoidStuck(robots);
 
         // calculate diff to pref velocity
         final double diff = RadianHelper.diff(dir, prefVelocity.radian());
@@ -128,9 +129,22 @@ public class Robot {
         setRotateSpeed(diff * MAX_CCW_ROTATE_SPEED);
     }
 
-    private void finishTarget() {
+    private void finishTarget(Robot[] robots, GameMap map) {
         Vector2 last = path.removeFirst();
+        if (map.getObstacles().length == 2485) {
+            // Output.debug(last + " " + path.getFirst());
+            List<Vector2> path1 = map.findPath(robots, id, last, this.path.getFirst(), hasItem());
+            if (id == 1)
+                Output.debug(path1);
+            if (path1 == null || path1.size() == 0) {
+                insertTarget(lastTarget);
+            }
+        }
         lastTarget = last;
+        // if (back) {
+        // wait(10);
+        // back = false;
+        // }
     }
 
     public void resetTargets(List<Vector2> list) {
@@ -148,10 +162,10 @@ public class Robot {
     }
 
     public void start(GameMap map, Robot[] robots, Workbench[] benches, Vector2[] obstacles) {
-        selfSchedule(map, benches);
+        selfSchedule(map, benches, robots);
     }
 
-    private Vector2[] posWindow = new Vector2[30];
+    private Vector2[] posWindow = new Vector2[20];
     private int posIndex = 0;
     private int coolDownFrame = 50;
 
@@ -165,13 +179,13 @@ public class Robot {
         if (coolDownFrame > 0) {
             coolDownFrame--;
         } else {
-            if (prePos != null && Vector2.distance(prePos, pos) < 0.001 && path.size() != 0) {
+            if (prePos != null && Vector2.distance(prePos, pos) < 0.05 && path.size() != 0 && lastTarget != null) {
                 // Output.debug(id + " is stuck " + GameController.frameID);
                 boolean nearRobot = false;
                 for (Robot r : robots) {
                     if (r == this)
                         continue;
-                    if (Vector2.distance(pos, r.pos) < 1.1) {
+                    if (Vector2.distance(pos, r.pos) < 1.5) {
                         nearRobot = true;
                         break;
                     }
@@ -188,7 +202,7 @@ public class Robot {
         }
     }
 
-    private void selfSchedule(GameMap map, Workbench[] benches) {
+    private void selfSchedule(GameMap map, Workbench[] benches, Robot[] robots) {
         // TODO: 决策
         if (hasItem()) {
             // sell item
@@ -196,18 +210,45 @@ public class Robot {
                 if (getAtWorkbenchID() == myScheme.sell.id) {
                     sell();
                     myScheme.finishPending();
+                    // Output.debug(myScheme.sell.hasMaterial(3));
                     myScheme = null;
                     return;
                 }
             }
             if (myScheme == null) {
-                if (this.path.size() == 0) {
-                    int targetID = map.getClosestWorkbench(pos, BitCalculator.setOne(0, getItem()), true);
-                    List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), true);
+                Scheme newScheme = map.getSchemes().stream()
+                        .filter(x -> x.canPending()
+                                && map.getDistToWorkbench(pos, x.sell.id, true) != Double.MAX_VALUE
+                                && x.sell.getType() == getItem())
+                        .min(Comparator.comparing(
+                                s -> map.getDistToWorkbench(pos, s.sell.id, true) + s.getDistBetween()))
+                        .orElse(null);
+
+                if (newScheme != null) {
+                    myScheme = newScheme;
+                    myScheme.setPending();
+                    myScheme.startSending();
+
+                    List<Vector2> path = map.findPath(robots, id, pos, myScheme.buy.getPos(), true);
+                    if (path == null) {
+                        destroy();
+                        return;
+                    }
+
                     resetTargets(path);
+                } else {
+                    destroy();
                 }
-                sell();
             }
+            // if (myScheme == null) {
+            // if (this.path.size() == 0) {
+            // int targetID = map.getClosestWorkbench(pos, BitCalculator.setOne(0,
+            // getItem()), true);
+            // List<Vector2> path = map.findPath(pos, benches[targetID].getPos(), true);
+            // resetTargets(path);
+            // }
+            // sell();
+            // }
 
         } else {
             // buy
@@ -217,9 +258,11 @@ public class Robot {
 
                     // head to sell
                     // TODO: 这里居然还有寻不到终点去的
-                    List<Vector2> path = map.findPath(pos, myScheme.sell.getPos(), true);
+                    List<Vector2> path = map.findPath(robots, id, pos, myScheme.sell.getPos(), true);
                     if (path != null) {
                         resetTargets(path);
+                    } else {
+                        insertTarget(lastTarget);
                     }
 
                     myScheme.startSending();
@@ -245,7 +288,8 @@ public class Robot {
             for (Scheme s : schemes) {
                 double d = map.getDistToWorkbench(pos, s.buy.id, false);
                 // if (d == Double.MAX_VALUE)
-                //     System.err.println(GameController.frameID + " " + id + " " + d + " " + s.buy.id);
+                // System.err.println(GameController.frameID + " " + id + " " + d + " " +
+                // s.buy.id);
                 if (s.canPending() && d != Double.MAX_VALUE) {
                     double c = map.getDistToWorkbench(pos, s.buy.id, false) + s.getDistBetween();
                     if (newScheme == null || c < cost) {
@@ -277,7 +321,7 @@ public class Robot {
                 }
 
                 // re-find path
-                List<Vector2> path = map.findPath(pos, newScheme.buy.getPos(), false);
+                List<Vector2> path = map.findPath(robots, id, pos, newScheme.buy.getPos(), false);
                 if (path == null)
                     return;
 
@@ -289,7 +333,7 @@ public class Robot {
         }
     }
 
-    private void genPrefVelocity() {
+    private void genPrefVelocity(GameMap map, Robot[] robots) {
         if (path.size() > 0) {
             // get target
             final Vector2 targetPos = path.getFirst();
@@ -318,7 +362,7 @@ public class Robot {
 
             // if arrive target
             if (distToTarget < DIST_ARRIVE) {
-                finishTarget();
+                finishTarget(robots, map);
             }
         } else {
             // no target, stop and wait
@@ -379,6 +423,10 @@ public class Robot {
 
                 final Vector2 relativePosition = obsPos.subtract(pos);
                 final Vector2 relativeVelocity = getLineSpeed();
+                // if (relativePosition.dot(relativeVelocity) < 0) {
+                // continue;
+                // }
+
                 final double dist2 = relativePosition.length2();
                 final double rr = getRadius() + 0.25;
                 final double rr2 = rr * rr;
@@ -462,8 +510,8 @@ public class Robot {
             if (other.id == id || Vector2.distance(pos, other.pos) > RVO2_AVOID_DIST)
                 continue;
 
-            if (Math.abs(RadianHelper.diff(dir, other.dir)) > Math.PI * 3 / 4)
-                continue;
+            // if (Math.abs(RadianHelper.diff(dir, other.dir)) > Math.PI * 3 / 4)
+            // continue;
 
             final Vector2 relativePosition = other.pos.subtract(pos);
             final Vector2 relativeVelocity = getLineSpeed().subtract(other.getLineSpeed());
@@ -622,7 +670,7 @@ public class Robot {
     }
 
     public double getRadius() {
-        return hasItem() ? 0.65 : 0.4;
+        return hasItem() ? 0.53 : 0.4;
     }
 
     public boolean betterThan(Robot other) {

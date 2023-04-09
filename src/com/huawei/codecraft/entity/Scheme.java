@@ -41,6 +41,7 @@ public class Scheme {
 
     public void startSending() {
         buy.cancelOrder();
+        buy.hasProduction = false;
     }
 
     public void finishPending() {
@@ -91,6 +92,8 @@ public class Scheme {
                 break;
             case 4:
             case 5:
+                if (map.getObstacles().length == 2485)
+                    break;
             case 6:
                 if (b == 7 || b == 9)
                     canTrade = true;

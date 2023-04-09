@@ -9,6 +9,7 @@ import com.huawei.codecraft.entity.Robot;
 import com.huawei.codecraft.io.Input;
 import com.huawei.codecraft.io.Output;
 import com.huawei.codecraft.math.Vector2;
+import com.huawei.codecraft.math.Vector2Int;
 
 public class GameController {
 
